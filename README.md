@@ -1,7 +1,8 @@
 # 🥚 EggScan
 
+![EggScan Cover Banner](cover.png)
+
 <div align="center">
-  <img src="frontend/src/components/EggLogo.jsx" alt="EggScan Logo" width="120" height="120" style="border-radius: 50%;" />
   <p><strong>Instantly scan, audit, and analyze GitHub profiles with Groq-powered AI.</strong></p>
 
   [![Java](https://img.shields.io/badge/Java-21-orange.svg?style=for-the-badge&logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
@@ -11,6 +12,7 @@
   [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4.13-38bdf8.svg?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
   [![Groq AI](https://img.shields.io/badge/Groq%20AI-Llama--3-red.svg?style=for-the-badge&logo=groq&logoColor=white)](https://groq.com/)
 </div>
+
 
 ---
 

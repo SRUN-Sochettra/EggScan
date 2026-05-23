@@ -18,6 +18,7 @@
 
 ## 📖 Table of Contents
 - [✨ Core Features](#-core-features)
+- [🥚 The Egg Verdict System](#-the-egg-verdict-system)
 - [🏗️ Project Architecture](#️-project-architecture)
 - [🚀 Getting Started](#-getting-started)
   - [Prerequisites](#prerequisites)
@@ -43,6 +44,20 @@
     Receives both a humorous "roast" and professional constructive feedback regarding code quality, repository layouts, and contribution consistency.
 *   **🎨 Glassmorphic React Dashboard**  
     A dark-themed, premium UI built with Vite and Tailwind CSS featuring interactive feedback cards, live loaders, and responsive layouts.
+
+---
+
+## 🥚 The Egg Verdict System
+
+EggScan grades your GitHub profile on a scale of **0 to 100** (the **Egg Score**) and assigns one of five egg-themed personality verdicts based on your codebase health, activity, and profile presentation:
+
+| Verdict | Emoji | Score Range | Tagline | Description |
+| :--- | :---: | :---: | :--- | :--- |
+| **Golden Egg** | 🥚✨ | 80–100 | *recruiter ready* | Exceptional profile. Spotless repositories, active contributions, and perfect presentation. Ready for any recruiter. |
+| **Hard Boiled** | 🍳 | 65–79 | *solid profile* | Strong developer presence. Solid repositories and consistent codebase patterns, with a few areas to polish. |
+| **Fresh Egg** | 🐣 | 45–64 | *just getting started* | A budding developer profile. Shows clear potential and basic projects, but lacks depth or documentation. |
+| **Cracked** | 🥚💔 | 25–44 | *needs work* | Incomplete or messy profile. Lacks pinned repositories, has sparse contributions, or needs major refactoring. |
+| **Scrambled** | 🍳💀 | 0–24 | *do not apply yet* | Absolute chaos. Little to no activity, missing READMEs, or codebases that need immediate help. |
 
 ---
 

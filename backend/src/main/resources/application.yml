@@ -1,0 +1,16 @@
+server:
+  port: 8080
+
+github:
+  token: ${GITHUB_TOKEN}
+  api-url: https://api.github.com
+  graphql-url: https://api.github.com/graphql
+
+groq:
+  api-key: ${GROQ_API_KEY}
+  api-url: https://api.groq.com/openai/v1
+  model: llama-3.3-70b-versatile
+
+spring:
+  jackson:
+    default-property-inclusion: non_null

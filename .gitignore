@@ -1,0 +1,112 @@
+# =========================================================================
+# EggScan - Git Ignore Configurations
+# Supports: Spring Boot (Java), React (Vite/Node), IntelliJ IDEA, VS Code
+# =========================================================================
+
+# -------------------------------------------------------------------------
+# OS/System Files
+# -------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# -------------------------------------------------------------------------
+# IDEs and Text Editors
+# -------------------------------------------------------------------------
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+*.code-workspace
+
+# NetBeans
+/nbproject/private/
+/build/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# Eclipse
+.metadata/
+.classpath
+.project
+.settings/
+*.launch
+.factorypath
+
+# -------------------------------------------------------------------------
+# Local Configuration and Credentials (CRITICAL)
+# -------------------------------------------------------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+*.p12
+*.jks
+*.db
+*.sqlite
+
+# -------------------------------------------------------------------------
+# Backend - Java / Maven (Spring Boot)
+# -------------------------------------------------------------------------
+backend/target/
+backend/.idea/
+backend/*.iml
+backend/.env
+backend/.env.local
+backend/logs/
+backend/*.log
+backend/temp/
+
+# Help folders created by Spring Boot
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/mvnw
+backend/mvnw.cmd
+
+# -------------------------------------------------------------------------
+# Frontend - JavaScript / Node (React / Vite)
+# -------------------------------------------------------------------------
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/out/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+frontend/.eslintcache
+frontend/coverage/
+frontend/.nyc_output
+frontend/.vite/
+frontend/.parcel-cache/
+
+# -------------------------------------------------------------------------
+# Miscellaneous
+# -------------------------------------------------------------------------
+# Log files
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/

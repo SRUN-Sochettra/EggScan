@@ -20,7 +20,7 @@ export default function ScanForm({ onScan, loading }) {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="your-github-username"
-          className="input-egg w-full pl-10"
+          className="input-egg w-full"
           disabled={loading}
           autoFocus
         />

@@ -8,9 +8,20 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 @Service
 public class AIAnalyzerService {
+
+    private static final Pattern EMOJI_PATTERN = Pattern.compile(
+            "[\\p{So}\\p{Cn}]|" +
+            "[\\x{1F000}-\\x{1FFFF}]|" +
+            "[\\x{2600}-\\x{27BF}]|" +
+            "[\\x{FE00}-\\x{FE0F}]|" +
+            "[\\x{200D}]"
+    );
+
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
     private final GroqService groq;
 
@@ -121,32 +132,26 @@ public class AIAnalyzerService {
 
     private String stripEmoji(String input) {
         if (input == null) return "";
-        String cleaned = input.replaceAll(
-                "[\\p{So}\\p{Cn}]|" +
-                        "[\\x{1F000}-\\x{1FFFF}]|" +
-                        "[\\x{2600}-\\x{27BF}]|" +
-                        "[\\x{FE00}-\\x{FE0F}]|" +
-                        "[\\x{200D}]",
-                ""
-        );
-        return cleaned.replaceAll("\\s+", " ").trim();
+        String cleaned = EMOJI_PATTERN.matcher(input).replaceAll("");
+        return WHITESPACE_PATTERN.matcher(cleaned).replaceAll(" ").trim();
     }
 
     private String buildContext(ScanResult scan, ContributionStats stats, Map<String, String> readmes) {
         StringBuilder sb = new StringBuilder();
 
-        appendProfileSection(sb, scan.getProfile());
-        appendActivitySection(sb, stats, scan);
-        appendLanguagesSection(sb, scan);
-        appendPinnedReposSection(sb, stats);
-        appendTopReposSection(sb, scan);
-        appendReadmeSnippetsSection(sb, readmes);
+        appendProfile(sb, scan);
+        appendActivity(sb, stats, scan);
+        appendLanguages(sb, scan);
+        appendPinnedRepos(sb, stats);
+        appendTopRepos(sb, scan);
+        appendReadmeSnippets(sb, readmes);
 
         sb.append("Now produce the JSON analysis. Be honest. Be specific. No filler.");
         return sb.toString();
     }
 
-    private void appendProfileSection(StringBuilder sb, com.eggscan.model.GitHubProfile p) {
+    private void appendProfile(StringBuilder sb, ScanResult scan) {
+        var p = scan.getProfile();
         sb.append("=== PROFILE ===\n");
         sb.append("Login: ").append(p.getLogin()).append("\n");
         sb.append("Name: ").append(nullSafe(p.getName())).append("\n");
@@ -158,7 +163,7 @@ public class AIAnalyzerService {
         sb.append("Joined: ").append(p.getCreated_at()).append("\n\n");
     }
 
-    private void appendActivitySection(StringBuilder sb, ContributionStats stats, ScanResult scan) {
+    private void appendActivity(StringBuilder sb, ContributionStats stats, ScanResult scan) {
         sb.append("=== ACTIVITY ===\n");
         sb.append("Contributions last year: ").append(stats.getTotalContributionsLastYear()).append("\n");
         sb.append("Issues opened: ").append(stats.getTotalIssues()).append("\n");
@@ -168,7 +173,7 @@ public class AIAnalyzerService {
         sb.append("Last push: ").append(scan.getLastActivity()).append("\n\n");
     }
 
-    private void appendLanguagesSection(StringBuilder sb, ScanResult scan) {
+    private void appendLanguages(StringBuilder sb, ScanResult scan) {
         sb.append("=== LANGUAGES (own repos) ===\n");
         scan.getLanguageBreakdown().entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
@@ -176,7 +181,7 @@ public class AIAnalyzerService {
         sb.append("\n");
     }
 
-    private void appendPinnedReposSection(StringBuilder sb, ContributionStats stats) {
+    private void appendPinnedRepos(StringBuilder sb, ContributionStats stats) {
         sb.append("=== PINNED REPOS ===\n");
         if (stats.getPinnedRepos().isEmpty()) {
             sb.append("(none — recruiter sees random repos instead)\n");
@@ -191,7 +196,7 @@ public class AIAnalyzerService {
         sb.append("\n");
     }
 
-    private void appendTopReposSection(StringBuilder sb, ScanResult scan) {
+    private void appendTopRepos(StringBuilder sb, ScanResult scan) {
         sb.append("=== TOP REPOS (sample) ===\n");
         scan.getRepos().stream().limit(10).forEach(r -> {
             sb.append("- ").append(r.getName())
@@ -203,7 +208,7 @@ public class AIAnalyzerService {
         sb.append("\n");
     }
 
-    private void appendReadmeSnippetsSection(StringBuilder sb, Map<String, String> readmes) {
+    private void appendReadmeSnippets(StringBuilder sb, Map<String, String> readmes) {
         sb.append("=== README SNIPPETS ===\n");
         int reposWithReadme = 0;
         for (var entry : readmes.entrySet()) {

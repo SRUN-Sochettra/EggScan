@@ -134,8 +134,19 @@ public class AIAnalyzerService {
 
     private String buildContext(ScanResult scan, ContributionStats stats, Map<String, String> readmes) {
         StringBuilder sb = new StringBuilder();
-        var p = scan.getProfile();
 
+        appendProfileSection(sb, scan.getProfile());
+        appendActivitySection(sb, stats, scan);
+        appendLanguagesSection(sb, scan);
+        appendPinnedReposSection(sb, stats);
+        appendTopReposSection(sb, scan);
+        appendReadmeSnippetsSection(sb, readmes);
+
+        sb.append("Now produce the JSON analysis. Be honest. Be specific. No filler.");
+        return sb.toString();
+    }
+
+    private void appendProfileSection(StringBuilder sb, com.eggscan.model.GitHubProfile p) {
         sb.append("=== PROFILE ===\n");
         sb.append("Login: ").append(p.getLogin()).append("\n");
         sb.append("Name: ").append(nullSafe(p.getName())).append("\n");
@@ -145,7 +156,9 @@ public class AIAnalyzerService {
         sb.append("Public repos: ").append(p.getPublic_repos()).append("\n");
         sb.append("Followers: ").append(p.getFollowers()).append("\n");
         sb.append("Joined: ").append(p.getCreated_at()).append("\n\n");
+    }
 
+    private void appendActivitySection(StringBuilder sb, ContributionStats stats, ScanResult scan) {
         sb.append("=== ACTIVITY ===\n");
         sb.append("Contributions last year: ").append(stats.getTotalContributionsLastYear()).append("\n");
         sb.append("Issues opened: ").append(stats.getTotalIssues()).append("\n");
@@ -153,13 +166,17 @@ public class AIAnalyzerService {
         sb.append("Active repos (pushed in 180d): ").append(scan.getActiveRepos()).append("\n");
         sb.append("Total stars across own repos: ").append(scan.getTotalStars()).append("\n");
         sb.append("Last push: ").append(scan.getLastActivity()).append("\n\n");
+    }
 
+    private void appendLanguagesSection(StringBuilder sb, ScanResult scan) {
         sb.append("=== LANGUAGES (own repos) ===\n");
         scan.getLanguageBreakdown().entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                 .forEach(e -> sb.append("- ").append(e.getKey()).append(": ").append(e.getValue()).append(" repo(s)\n"));
         sb.append("\n");
+    }
 
+    private void appendPinnedReposSection(StringBuilder sb, ContributionStats stats) {
         sb.append("=== PINNED REPOS ===\n");
         if (stats.getPinnedRepos().isEmpty()) {
             sb.append("(none — recruiter sees random repos instead)\n");
@@ -172,7 +189,9 @@ public class AIAnalyzerService {
             }
         }
         sb.append("\n");
+    }
 
+    private void appendTopReposSection(StringBuilder sb, ScanResult scan) {
         sb.append("=== TOP REPOS (sample) ===\n");
         scan.getRepos().stream().limit(10).forEach(r -> {
             sb.append("- ").append(r.getName())
@@ -182,7 +201,9 @@ public class AIAnalyzerService {
                     .append(" (last push: ").append(nullSafe(r.getPushed_at())).append(")\n");
         });
         sb.append("\n");
+    }
 
+    private void appendReadmeSnippetsSection(StringBuilder sb, Map<String, String> readmes) {
         sb.append("=== README SNIPPETS ===\n");
         int reposWithReadme = 0;
         for (var entry : readmes.entrySet()) {
@@ -196,9 +217,6 @@ public class AIAnalyzerService {
             }
         }
         sb.append("README coverage: ").append(reposWithReadme).append(" of ").append(readmes.size()).append(" top repos\n\n");
-
-        sb.append("Now produce the JSON analysis. Be honest. Be specific. No filler.");
-        return sb.toString();
     }
 
     private String nullSafe(Object o) {

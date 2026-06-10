@@ -53,16 +53,17 @@ public class ScanService {
         }
     }
 
-    public List<ScanResponse> getLeaderboard() {
+    public List<com.eggscan.dto.LeaderboardEntry> getLeaderboard() {
         return scanRecordRepository.findTop10ByOrderByScoreDesc().stream().map(record -> {
-            try {
-                ScanResponse response = objectMapper.readValue(record.getJsonPayload(), ScanResponse.class);
-                response.setId(record.getId());
-                return response;
-            } catch (Exception e) {
-                return null;
-            }
-        }).filter(java.util.Objects::nonNull).collect(Collectors.toList());
+            return com.eggscan.dto.LeaderboardEntry.builder()
+                    .id(record.getId())
+                    .username(record.getUsername())
+                    .avatarUrl(record.getAvatarUrl())
+                    .vibe(record.getVibe())
+                    .eggScore(record.getScore())
+                    .eggVerdict(record.getVerdict())
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     public ScanResponse scan(String username, String mode) {
@@ -119,6 +120,8 @@ public class ScanService {
                         .username(response.getUsername())
                         .score(response.getEggScore())
                         .verdict(response.getEggVerdict())
+                        .avatarUrl(response.getAvatarUrl())
+                        .vibe(response.getVibe())
                         .jsonPayload(objectMapper.writeValueAsString(response))
                         .scannedAt(LocalDateTime.now())
                         .build();

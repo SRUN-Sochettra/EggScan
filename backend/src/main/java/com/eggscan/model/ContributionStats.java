@@ -6,6 +6,7 @@ import java.util.List;
 
 @Data
 @Builder
+@lombok.extern.jackson.Jacksonized
 public class ContributionStats {
     private int totalContributionsLastYear;
     private int totalIssues;

@@ -5,6 +5,8 @@ import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
 public class GitHubRepo {
     private Long id;
     private String name;

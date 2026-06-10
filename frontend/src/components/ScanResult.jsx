@@ -182,6 +182,8 @@ function ShareButton({ data, resultRef }) {
     const tagline =
       TAGLINES[data.eggVerdict] || 'rated in eggs'
 
+    const shareUrl = data.id ? `${window.location.origin}/?id=${data.id}` : window.location.origin
+
     return `I just got scanned on EggScan 🥚
 
 Verdict: ${data.eggVerdict} — ${tagline}
@@ -190,7 +192,7 @@ Vibe: ${data.vibe}
 ${topSkills ? `Top skills: ${topSkills}` : ''}
 
 Get your GitHub rated in eggs ↓
-${window.location.origin}`
+${shareUrl}`
   }
 
   const handleShare = async () => {

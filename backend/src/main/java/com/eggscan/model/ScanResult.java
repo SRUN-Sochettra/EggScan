@@ -7,6 +7,7 @@ import java.util.Map;
 
 @Data
 @Builder
+@lombok.extern.jackson.Jacksonized
 public class ScanResult {
     private GitHubProfile profile;
     private List<GitHubRepo> repos;

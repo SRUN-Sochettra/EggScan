@@ -1,23 +1,69 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ScanForm from './components/ScanForm'
 import ScanResult from './components/ScanResult'
 import Loader from './components/Loader'
 import EggLogo from './components/EggLogo'
 import { IconBrokenEgg } from './components/Icons'
-import { scanGithub } from './api/eggscan'
+import Leaderboard from './components/Leaderboard'
+import BattleForm from './components/BattleForm'
+import BattleResult from './components/BattleResult'
+import { scanGithub, getScanResult, battleGithub } from './api/eggscan'
 
 export default function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
+  const [battleMode, setBattleMode] = useState(false)
+  const [battleData, setBattleData] = useState(null)
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    if (id) {
+      fetchResult(id);
+    }
+  }, []);
+
+  const fetchResult = async (id) => {
+    setLoading(true)
+    setError(null)
+    setResult(null)
+    try {
+      const data = await getScanResult(id)
+      setResult(data)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleScan = async (username, mode) => {
     setLoading(true)
     setError(null)
     setResult(null)
+    setBattleData(null)
+    window.history.pushState({}, '', '/');
     try {
       const data = await scanGithub(username, mode)
       setResult(data)
+      window.history.pushState({}, '', `/?id=${data.id}`);
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleBattle = async (u1, u2) => {
+    setLoading(true)
+    setError(null)
+    setResult(null)
+    setBattleData(null)
+    window.history.pushState({}, '', '/');
+    try {
+      const data = await battleGithub(u1, u2)
+      setBattleData(data)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -48,9 +94,22 @@ export default function App() {
           </p>
         </header>
 
-        <ScanForm onScan={handleScan} loading={loading} />
+        <div className="flex justify-center mb-6">
+          <button
+            onClick={() => { setBattleMode(!battleMode); setError(null); setResult(null); setBattleData(null); }}
+            className="text-brown-500 font-bold hover:text-brown-700 underline underline-offset-4 transition-colors text-sm"
+          >
+            {battleMode ? "Switch to Normal Scan" : "Try 1v1 Battle Mode 🥊"}
+          </button>
+        </div>
 
-        {!loading && !result && !error && (
+        {battleMode ? (
+          <BattleForm onBattle={handleBattle} loading={loading} />
+        ) : (
+          <ScanForm onScan={handleScan} loading={loading} />
+        )}
+
+        {!loading && !result && !battleData && !error && !battleMode && (
           <p className="text-center text-brown-400 text-sm mt-6 italic">
             warning: brutally honest
           </p>
@@ -69,11 +128,14 @@ export default function App() {
         )}
 
         {result && <ScanResult data={result} />}
+        {battleData && <BattleResult data={battleData} />}
 
         <footer className="text-center text-brown-400 text-xs mt-16 pb-4">
           made with love · scanned with care
         </footer>
       </div>
+
+      <Leaderboard />
     </div>
   )
 }

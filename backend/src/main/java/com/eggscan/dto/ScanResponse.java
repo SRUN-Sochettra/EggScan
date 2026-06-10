@@ -7,7 +7,9 @@ import java.util.List;
 
 @Data
 @Builder
+@lombok.extern.jackson.Jacksonized
 public class ScanResponse {
+    private String id;
     private String username;
     private String avatarUrl;
     private String name;

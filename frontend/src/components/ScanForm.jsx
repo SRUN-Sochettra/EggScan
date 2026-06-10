@@ -22,6 +22,7 @@ export default function ScanForm({ onScan, loading }) {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="your-github-username"
+            aria-label="GitHub username"
             className="input-egg w-full"
             disabled={loading}
             autoFocus
@@ -30,6 +31,7 @@ export default function ScanForm({ onScan, loading }) {
         <button
           type="submit"
           disabled={loading || !username.trim()}
+          title={!username.trim() ? "Please enter a username first" : "Scan this profile"}
           className="btn-primary whitespace-nowrap flex items-center gap-2 justify-center"
         >
           <IconMagnifier size={20} />

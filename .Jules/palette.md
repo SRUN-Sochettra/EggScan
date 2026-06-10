@@ -1,0 +1,3 @@
+## 2024-06-10 - Adding form input and modal close button accessibility
+**Learning:** Found an accessibility issue pattern specific to this app's components: custom inputs with absolute positioned icons/text (like the `@` symbol in `ScanForm` and `BattleForm`) often lack explicit `aria-label`s because they rely on visual placeholders or adjacent layout elements rather than semantic labels. Also, the `Leaderboard` modal used a standard text "✕" as an icon-only button without an `aria-label`.
+**Action:** Always verify that inputs with decorative/absolute-positioned elements still have proper `aria-label`s or associated `<label>`s, and ensure all icon-only or decorative-text-only buttons (like "✕") have clear `aria-label`s describing their action.

@@ -39,6 +39,7 @@ export default function Leaderboard({ onScan }) {
               <h2 className="font-display font-black text-2xl text-brown-700">Hall of Fame</h2>
               <button
                 onClick={() => setIsOpen(false)}
+                aria-label="Close leaderboard"
                 className="text-brown-700 font-bold text-xl hover:scale-110 transition-transform"
               >
                 ✕

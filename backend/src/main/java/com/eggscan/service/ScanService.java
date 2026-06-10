@@ -16,8 +16,10 @@ import java.util.UUID;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.eggscan.dto.BattleResponse;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class ScanService {
 
     private final GitHubService gitHubService;
@@ -67,21 +69,40 @@ public class ScanService {
     }
 
     public ScanResponse scan(String username, String mode) {
-        // Serve from cache ONLY if mode matches the cached record (currently we only cache 'honest' mode)
-        if ("honest".equalsIgnoreCase(mode) || mode == null) {
-            Optional<ScanRecord> recentScan = scanRecordRepository.findFirstByUsernameOrderByScannedAtDesc(username);
-            // Verify the cached scan was also 'honest' or if not stored, assume default behavior
-            if (recentScan.isPresent() && recentScan.get().getScannedAt().isAfter(LocalDateTime.now().minusHours(24))) {
-                try {
-                    ScanResponse cachedResponse = objectMapper.readValue(recentScan.get().getJsonPayload(), ScanResponse.class);
-                    cachedResponse.setId(recentScan.get().getId());
-                    return cachedResponse;
-                } catch (Exception e) {
-                    // fall through and re-scan
-                }
-            }
+        log.info("Scanning username: {}", username);
+
+        Optional<ScanResponse> cachedResponse = getCachedScanIfEligible(username, mode);
+        if (cachedResponse.isPresent()) {
+            return cachedResponse.get();
         }
 
+        ScanResponse response = performNewScan(username, mode);
+        cacheResultIfEligible(response, mode);
+
+        return response;
+    }
+
+    private Optional<ScanResponse> getCachedScanIfEligible(String username, String mode) {
+        // Serve from cache ONLY if mode matches the cached record (currently we only cache 'honest' mode)
+        if (!isHonestMode(mode)) {
+            return Optional.empty();
+        }
+
+        Optional<ScanRecord> recentScan = scanRecordRepository.findFirstByUsernameOrderByScannedAtDesc(username);
+        if (recentScan.isPresent() && recentScan.get().getScannedAt().isAfter(LocalDateTime.now().minusHours(24))) {
+            try {
+                ScanResponse cachedResponse = objectMapper.readValue(recentScan.get().getJsonPayload(), ScanResponse.class);
+                cachedResponse.setId(recentScan.get().getId());
+                log.info("Returning cached scan result for username: {}", username);
+                return Optional.of(cachedResponse);
+            } catch (Exception e) {
+                log.warn("Failed to parse cached scan result for username: {}, falling back to re-scan", username, e);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private ScanResponse performNewScan(String username, String mode) {
         // 1. Fetch core data
         ScanResult data = gitHubService.scanUser(username);
 
@@ -95,7 +116,11 @@ public class ScanService {
         // 4. Send everything to Groq
         AIInsights ai = analyzer.analyze(data, stats, readmes, mode);
 
-        ScanResponse response = ScanResponse.builder()
+        return buildResponse(data, stats, ai);
+    }
+
+    private ScanResponse buildResponse(ScanResult data, ContributionStats stats, AIInsights ai) {
+        return ScanResponse.builder()
                 .id(UUID.randomUUID().toString())
                 .username(data.getProfile().getLogin())
                 .avatarUrl(data.getProfile().getAvatar_url())
@@ -111,9 +136,11 @@ public class ScanService {
                 .rawData(data)
                 .stats(stats)
                 .build();
+    }
 
+    private void cacheResultIfEligible(ScanResponse response, String mode) {
         // We only cache the 'honest' mode to populate the leaderboard and avoid serving roasts on permalinks by default.
-        if ("honest".equalsIgnoreCase(mode) || mode == null) {
+        if (isHonestMode(mode)) {
             try {
                 ScanRecord record = ScanRecord.builder()
                         .id(response.getId())
@@ -126,12 +153,15 @@ public class ScanService {
                         .scannedAt(LocalDateTime.now())
                         .build();
                 scanRecordRepository.save(record);
+                log.info("Cached scan result for username: {}", response.getUsername());
             } catch (Exception e) {
-                System.err.println("Failed to cache scan result: " + e.getMessage());
+                log.error("Failed to cache scan result for username: {}", response.getUsername(), e);
             }
         }
+    }
 
-        return response;
+    private boolean isHonestMode(String mode) {
+        return "honest".equalsIgnoreCase(mode) || mode == null;
     }
 
     private String emojiFor(String verdict) {

@@ -8,9 +8,20 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 @Service
 public class AIAnalyzerService {
+
+    private static final Pattern EMOJI_PATTERN = Pattern.compile(
+            "[\\p{So}\\p{Cn}]|" +
+            "[\\x{1F000}-\\x{1FFFF}]|" +
+            "[\\x{2600}-\\x{27BF}]|" +
+            "[\\x{FE00}-\\x{FE0F}]|" +
+            "[\\x{200D}]"
+    );
+
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
     private final GroqService groq;
 
@@ -121,15 +132,8 @@ public class AIAnalyzerService {
 
     private String stripEmoji(String input) {
         if (input == null) return "";
-        String cleaned = input.replaceAll(
-                "[\\p{So}\\p{Cn}]|" +
-                        "[\\x{1F000}-\\x{1FFFF}]|" +
-                        "[\\x{2600}-\\x{27BF}]|" +
-                        "[\\x{FE00}-\\x{FE0F}]|" +
-                        "[\\x{200D}]",
-                ""
-        );
-        return cleaned.replaceAll("\\s+", " ").trim();
+        String cleaned = EMOJI_PATTERN.matcher(input).replaceAll("");
+        return WHITESPACE_PATTERN.matcher(cleaned).replaceAll(" ").trim();
     }
 
     private String buildContext(ScanResult scan, ContributionStats stats, Map<String, String> readmes) {

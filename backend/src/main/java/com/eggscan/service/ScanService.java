@@ -106,14 +106,12 @@ public class ScanService {
         // 1. Fetch core data
         ScanResult data = gitHubService.scanUser(username);
 
-        // 2. Fetch GraphQL extras (pinned + contributions)
+    private ScanResponse performNewScan(String username, String mode) {
+        ScanResult data = gitHubService.scanUser(username);
         ContributionStats stats = graphQLService.fetchStats(username);
-
-        // 3. Fetch top READMEs
         Map<String, String> readmes = readmeService.fetchTopReadmes(username, data.getRepos(), 5);
         data.setReposWithReadme(readmeService.countReposWithReadme(readmes));
 
-        // 4. Send everything to Groq
         AIInsights ai = analyzer.analyze(data, stats, readmes, mode);
 
         return buildResponse(data, stats, ai);

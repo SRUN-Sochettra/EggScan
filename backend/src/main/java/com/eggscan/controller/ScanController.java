@@ -2,6 +2,7 @@ package com.eggscan.controller;
 
 import com.eggscan.dto.ScanResponse;
 import com.eggscan.service.ScanService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,6 +10,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
+@Slf4j
 public class ScanController {
 
     private final ScanService scanService;
@@ -23,8 +25,9 @@ public class ScanController {
             ScanResponse response = scanService.scan(username, mode);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            log.error("Error occurred while scanning username: {}", username, e);
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", "An error occurred while processing the request"));
         }
     }
 
@@ -33,8 +36,9 @@ public class ScanController {
         try {
             return ResponseEntity.ok(scanService.battle(u1, u2));
         } catch (Exception e) {
+            log.error("Error occurred during battle between {} and {}", u1, u2, e);
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", "An error occurred while processing the request"));
         }
     }
 
@@ -44,8 +48,9 @@ public class ScanController {
             ScanResponse response = scanService.getScanById(id);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            log.error("Error occurred while fetching scan by id: {}", id, e);
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", "An error occurred while processing the request"));
         }
     }
 
@@ -54,8 +59,9 @@ public class ScanController {
         try {
             return ResponseEntity.ok(scanService.getLeaderboard());
         } catch (Exception e) {
+            log.error("Error occurred while fetching leaderboard", e);
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", "An error occurred while processing the request"));
         }
     }
 

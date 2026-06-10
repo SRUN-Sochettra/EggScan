@@ -24,51 +24,42 @@ export default function App() {
     }
   }, []);
 
-  const fetchResult = async (id) => {
+  const executeWithLoading = async (action) => {
     setLoading(true)
     setError(null)
     setResult(null)
+    setBattleData(null)
     try {
-      const data = await getScanResult(id)
-      setResult(data)
+      await action()
     } catch (e) {
       setError(e.message)
     } finally {
       setLoading(false)
     }
+  }
+
+  const fetchResult = async (id) => {
+    await executeWithLoading(async () => {
+      const data = await getScanResult(id)
+      setResult(data)
+    })
   }
 
   const handleScan = async (username, mode) => {
-    setLoading(true)
-    setError(null)
-    setResult(null)
-    setBattleData(null)
     window.history.pushState({}, '', '/');
-    try {
+    await executeWithLoading(async () => {
       const data = await scanGithub(username, mode)
       setResult(data)
       window.history.pushState({}, '', `/?id=${data.id}`);
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   const handleBattle = async (u1, u2) => {
-    setLoading(true)
-    setError(null)
-    setResult(null)
-    setBattleData(null)
     window.history.pushState({}, '', '/');
-    try {
+    await executeWithLoading(async () => {
       const data = await battleGithub(u1, u2)
       setBattleData(data)
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   return (

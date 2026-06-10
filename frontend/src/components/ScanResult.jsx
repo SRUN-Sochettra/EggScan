@@ -12,13 +12,20 @@ import {
   IconSparkle,
 } from './Icons'
 
+import ShareButton from './ScanResultComponents/ShareButton'
+import InsightCard from './ScanResultComponents/InsightCard'
+import ProfileHeader from './ScanResultComponents/ProfileHeader'
+import DetailedStats from './ScanResultComponents/DetailedStats'
+import KeyRepositories from './ScanResultComponents/KeyRepositories'
+
 export default function ScanResult({ data }) {
   const resultRef = useRef(null)
 
   return (
     <div className="space-y-5 mt-10 animate-[pop_0.4s_ease-out]">
       <div ref={resultRef} className="space-y-5 bg-[#FFFDF7] p-2 rounded-xl -m-2">
-        <ProfileHeader data={data} />
+      {/* Profile header */}
+      <ProfileHeader data={data} />
 
         <VerdictCard
           verdict={data.eggVerdict}
@@ -51,46 +58,24 @@ export default function ScanResult({ data }) {
               <span key={skill} className="chip">
                 {skill}
               </span>
-            ))}
-          </div>
-        </InsightCard>
+            </li>
+          ))}
+        </ul>
+      </InsightCard>
 
-        <InsightCard
-          icon={<IconCone />}
-          title="What's missing / how to improve"
-          rotate="-rotate-1"
-        >
-          <ul className="space-y-2.5">
-            {data.improvements.map((improvement, idx) => (
-              <li
-                key={idx}
-                className="flex gap-3 text-brown-600"
-              >
-                <span className="text-yolk font-bold mt-0.5 shrink-0">
-                  →
-                </span>
+      <InsightCard
+        icon={<IconSparkle />}
+        title="Your vibe as a developer"
+        rotate="rotate-1"
+      >
+        <p className="text-brown-600 font-display font-semibold text-xl">
+          {data.vibe}
+        </p>
+      </InsightCard>
 
-                <span className="leading-relaxed">
-                  {improvement}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </InsightCard>
+      <DetailedStats data={data} />
 
-        <InsightCard
-          icon={<IconSparkle />}
-          title="Your vibe as a developer"
-          rotate="rotate-1"
-        >
-          <p className="text-brown-600 font-display font-semibold text-xl">
-            {data.vibe}
-          </p>
-        </InsightCard>
-
-        <DetailedStats data={data} />
-
-        <KeyRepositories data={data} />
+      <KeyRepositories data={data} />
       </div>
 
       {/* Share footer */}

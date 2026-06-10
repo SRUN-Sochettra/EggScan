@@ -1,10 +1,5 @@
 import { useRef } from 'react'
 import VerdictCard from './VerdictCard'
-import ShareButton from './ShareButton'
-import ProfileHeader from './ProfileHeader'
-import InsightCard from './InsightCard'
-import DetailedStats from './DetailedStats'
-import KeyRepositories from './KeyRepositories'
 import {
   IconEye,
   IconTools,
@@ -58,10 +53,9 @@ export default function ScanResult({ data }) {
               <span key={skill} className="chip">
                 {skill}
               </span>
-            </li>
-          ))}
-        </ul>
-      </InsightCard>
+            ))}
+          </div>
+        </InsightCard>
 
       <InsightCard
         icon={<IconSparkle />}

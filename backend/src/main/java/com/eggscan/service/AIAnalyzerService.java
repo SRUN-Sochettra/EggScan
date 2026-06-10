@@ -91,6 +91,30 @@ public class AIAnalyzerService {
         return out;
     }
 
+    public String battle(ScanResult scan1, ContributionStats stats1, ScanResult scan2, ContributionStats stats2) {
+        String prompt = "You are an aggressive fighting game announcer. Two developers are battling. Read their stats and declare a winner in exactly one paragraph. Roast the loser. Hype the winner. Be highly entertaining.";
+
+        StringBuilder context = new StringBuilder();
+        context.append("--- PLAYER 1: ").append(scan1.getProfile().getLogin()).append(" ---\n");
+        context.append("Total Stars: ").append(scan1.getTotalStars()).append("\n");
+        context.append("Contributions: ").append(stats1.getTotalContributionsLastYear()).append("\n");
+        context.append("Public Repos: ").append(scan1.getProfile().getPublic_repos()).append("\n\n");
+
+        context.append("--- PLAYER 2: ").append(scan2.getProfile().getLogin()).append(" ---\n");
+        context.append("Total Stars: ").append(scan2.getTotalStars()).append("\n");
+        context.append("Contributions: ").append(stats2.getTotalContributionsLastYear()).append("\n");
+        context.append("Public Repos: ").append(scan2.getProfile().getPublic_repos()).append("\n\n");
+
+        context.append("Respond with JSON: { \"winner\": \"username\", \"report\": \"your paragraph here\" }");
+
+        try {
+            com.fasterxml.jackson.databind.JsonNode json = groq.chatJson(prompt, context.toString());
+            return json.path("winner").asText() + "|||" + stripEmoji(json.path("report").asText());
+        } catch (Exception e) {
+            return scan1.getProfile().getLogin() + "|||It's a tie because the AI crashed.";
+        }
+    }
+
     private int clamp(int v) {
         return Math.max(0, Math.min(100, v));
     }

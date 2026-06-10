@@ -103,10 +103,6 @@ public class ScanService {
     }
 
     private ScanResponse performNewScan(String username, String mode) {
-        // 1. Fetch core data
-        ScanResult data = gitHubService.scanUser(username);
-
-    private ScanResponse performNewScan(String username, String mode) {
         ScanResult data = gitHubService.scanUser(username);
         ContributionStats stats = graphQLService.fetchStats(username);
         Map<String, String> readmes = readmeService.fetchTopReadmes(username, data.getRepos(), 5);

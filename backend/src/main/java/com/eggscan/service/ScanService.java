@@ -66,35 +66,52 @@ public class ScanService {
     }
 
     public ScanResponse scan(String username, String mode) {
-        // Serve from cache ONLY if mode matches the cached record (currently we only cache 'honest' mode)
-        if ("honest".equalsIgnoreCase(mode) || mode == null) {
-            Optional<ScanRecord> recentScan = scanRecordRepository.findFirstByUsernameOrderByScannedAtDesc(username);
-            // Verify the cached scan was also 'honest' or if not stored, assume default behavior
-            if (recentScan.isPresent() && recentScan.get().getScannedAt().isAfter(LocalDateTime.now().minusHours(24))) {
-                try {
-                    ScanResponse cachedResponse = objectMapper.readValue(recentScan.get().getJsonPayload(), ScanResponse.class);
-                    cachedResponse.setId(recentScan.get().getId());
-                    return cachedResponse;
-                } catch (Exception e) {
-                    // fall through and re-scan
-                }
-            }
+        Optional<ScanResponse> cachedResponse = getCachedResponse(username, mode);
+        if (cachedResponse.isPresent()) {
+            return cachedResponse.get();
         }
 
-        // 1. Fetch core data
+        ScanResponse response = performNewScan(username, mode);
+        cacheResponseIfNeeded(response, mode);
+
+        return response;
+    }
+
+    private Optional<ScanResponse> getCachedResponse(String username, String mode) {
+        if (!isCacheableMode(mode)) {
+            return Optional.empty();
+        }
+
+        Optional<ScanRecord> recentScan = scanRecordRepository.findFirstByUsernameOrderByScannedAtDesc(username);
+        if (recentScan.isPresent() && recentScan.get().getScannedAt().isAfter(LocalDateTime.now().minusHours(24))) {
+            try {
+                ScanResponse cachedResponse = objectMapper.readValue(recentScan.get().getJsonPayload(), ScanResponse.class);
+                cachedResponse.setId(recentScan.get().getId());
+                return Optional.of(cachedResponse);
+            } catch (Exception e) {
+                // fall through and return empty
+            }
+        }
+        return Optional.empty();
+    }
+
+    private boolean isCacheableMode(String mode) {
+        return "honest".equalsIgnoreCase(mode) || mode == null;
+    }
+
+    private ScanResponse performNewScan(String username, String mode) {
         ScanResult data = gitHubService.scanUser(username);
-
-        // 2. Fetch GraphQL extras (pinned + contributions)
         ContributionStats stats = graphQLService.fetchStats(username);
-
-        // 3. Fetch top READMEs
         Map<String, String> readmes = readmeService.fetchTopReadmes(username, data.getRepos(), 5);
         data.setReposWithReadme(readmeService.countReposWithReadme(readmes));
 
-        // 4. Send everything to Groq
         AIInsights ai = analyzer.analyze(data, stats, readmes, mode);
 
-        ScanResponse response = ScanResponse.builder()
+        return buildScanResponse(data, stats, ai);
+    }
+
+    private ScanResponse buildScanResponse(ScanResult data, ContributionStats stats, AIInsights ai) {
+        return ScanResponse.builder()
                 .id(UUID.randomUUID().toString())
                 .username(data.getProfile().getLogin())
                 .avatarUrl(data.getProfile().getAvatar_url())
@@ -110,25 +127,26 @@ public class ScanService {
                 .rawData(data)
                 .stats(stats)
                 .build();
+    }
 
-        // We only cache the 'honest' mode to populate the leaderboard and avoid serving roasts on permalinks by default.
-        if ("honest".equalsIgnoreCase(mode) || mode == null) {
-            try {
-                ScanRecord record = ScanRecord.builder()
-                        .id(response.getId())
-                        .username(response.getUsername())
-                        .score(response.getEggScore())
-                        .verdict(response.getEggVerdict())
-                        .jsonPayload(objectMapper.writeValueAsString(response))
-                        .scannedAt(LocalDateTime.now())
-                        .build();
-                scanRecordRepository.save(record);
-            } catch (Exception e) {
-                System.err.println("Failed to cache scan result: " + e.getMessage());
-            }
+    private void cacheResponseIfNeeded(ScanResponse response, String mode) {
+        if (!isCacheableMode(mode)) {
+            return;
         }
 
-        return response;
+        try {
+            ScanRecord record = ScanRecord.builder()
+                    .id(response.getId())
+                    .username(response.getUsername())
+                    .score(response.getEggScore())
+                    .verdict(response.getEggVerdict())
+                    .jsonPayload(objectMapper.writeValueAsString(response))
+                    .scannedAt(LocalDateTime.now())
+                    .build();
+            scanRecordRepository.save(record);
+        } catch (Exception e) {
+            System.err.println("Failed to cache scan result: " + e.getMessage());
+        }
     }
 
     private String emojiFor(String verdict) {

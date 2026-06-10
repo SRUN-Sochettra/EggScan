@@ -13,15 +13,15 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class GitHubServiceTest {
+public class GitHubServiceTest {
 
     @Mock
     private WebClient webClient;
@@ -30,10 +30,16 @@ class GitHubServiceTest {
     private WebClient.RequestHeadersUriSpec requestHeadersUriSpec;
 
     @Mock
-    private WebClient.RequestHeadersSpec requestHeadersSpec;
+    private WebClient.RequestHeadersSpec requestHeadersSpecProfile;
 
     @Mock
-    private WebClient.ResponseSpec responseSpec;
+    private WebClient.RequestHeadersSpec requestHeadersSpecRepos;
+
+    @Mock
+    private WebClient.ResponseSpec responseSpecProfile;
+
+    @Mock
+    private WebClient.ResponseSpec responseSpecRepos;
 
     private GitHubService gitHubService;
 
@@ -42,133 +48,148 @@ class GitHubServiceTest {
         gitHubService = new GitHubService(webClient);
     }
 
-    private void mockWebClient(GitHubProfile profile, GitHubRepo[] repos) {
-        // Mock profile fetch
+    private void mockWebClient(GitHubProfile profile, GitHubRepo[] repos, boolean profileError) {
         when(webClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri(eq("/users/{u}"), anyString())).thenReturn(requestHeadersSpec);
-        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
 
-        if (profile != null) {
-            when(responseSpec.bodyToMono(GitHubProfile.class)).thenReturn(Mono.just(profile));
+        // Mock URI matching for profile
+        when(requestHeadersUriSpec.uri(eq("/users/{u}"), anyString())).thenReturn(requestHeadersSpecProfile);
+        when(requestHeadersSpecProfile.retrieve()).thenReturn(responseSpecProfile);
+
+        if (profileError) {
+            when(responseSpecProfile.bodyToMono(GitHubProfile.class))
+                    .thenReturn(Mono.error(new RuntimeException("User not found: " + "testuser")));
         } else {
-            when(responseSpec.bodyToMono(GitHubProfile.class)).thenReturn(Mono.error(new RuntimeException("User not found")));
+            when(responseSpecProfile.bodyToMono(GitHubProfile.class)).thenReturn(Mono.just(profile));
         }
 
-        // Mock repos fetch
-        when(requestHeadersUriSpec.uri(eq("/users/{u}/repos?per_page=100&sort=updated"), anyString())).thenReturn(requestHeadersSpec);
-
-        if (repos != null) {
-            when(responseSpec.bodyToMono(GitHubRepo[].class)).thenReturn(Mono.just(repos));
-        } else {
-            // It could return an empty Mono if not found, but based on code, null repos throws or handles differently
-            when(responseSpec.bodyToMono(GitHubRepo[].class)).thenReturn(Mono.empty());
+        // Mock URI matching for repos
+        if (!profileError) {
+            when(requestHeadersUriSpec.uri(eq("/users/{u}/repos?per_page=100&sort=updated"), anyString())).thenReturn(requestHeadersSpecRepos);
+            when(requestHeadersSpecRepos.retrieve()).thenReturn(responseSpecRepos);
+            when(responseSpecRepos.bodyToMono(GitHubRepo[].class)).thenReturn(Mono.just(repos != null ? repos : new GitHubRepo[0]));
         }
     }
 
     @Test
     void scanUser_HappyPath() {
-        // Arrange
         GitHubProfile profile = new GitHubProfile();
         profile.setLogin("testuser");
+        profile.setName("Test User");
 
         GitHubRepo repo1 = new GitHubRepo();
+        repo1.setName("repo1");
         repo1.setFork(false);
         repo1.setLanguage("Java");
         repo1.setStargazers_count(10);
         repo1.setPushed_at(Instant.now().toString());
 
         GitHubRepo repo2 = new GitHubRepo();
+        repo2.setName("repo2");
         repo2.setFork(false);
         repo2.setLanguage("Java");
         repo2.setStargazers_count(5);
         repo2.setPushed_at(Instant.now().minus(10, ChronoUnit.DAYS).toString());
 
-        GitHubRepo forkRepo = new GitHubRepo();
-        forkRepo.setFork(true);
-        forkRepo.setLanguage("Python");
-        forkRepo.setStargazers_count(100);
+        GitHubRepo repo3 = new GitHubRepo();
+        repo3.setName("repo3");
+        repo3.setFork(true); // Should be filtered out
+        repo3.setLanguage("Python");
+        repo3.setStargazers_count(100);
+        repo3.setPushed_at(Instant.now().toString());
 
-        GitHubRepo[] repos = {repo1, repo2, forkRepo};
+        GitHubRepo repo4 = new GitHubRepo();
+        repo4.setName("repo4");
+        repo4.setFork(false);
+        repo4.setLanguage("JavaScript");
+        repo4.setStargazers_count(2);
+        repo4.setPushed_at(Instant.now().minus(200, ChronoUnit.DAYS).toString()); // Inactive
 
-        mockWebClient(profile, repos);
+        GitHubRepo[] repos = {repo1, repo2, repo3, repo4};
 
-        // Act
+        mockWebClient(profile, repos, false);
+
         ScanResult result = gitHubService.scanUser("testuser");
 
-        // Assert
         assertNotNull(result);
         assertEquals("testuser", result.getProfile().getLogin());
-        assertEquals(2, result.getRepos().size(), "Forks should be filtered out");
 
-        assertEquals(1, result.getLanguageBreakdown().size());
-        assertEquals(2, result.getLanguageBreakdown().get("Java"));
+        // Assert forks are filtered (3 own repos remaining)
+        assertEquals(3, result.getRepos().size());
 
-        assertEquals(15, result.getTotalStars());
+        // Assert languages
+        Map<String, Integer> langs = result.getLanguageBreakdown();
+        assertEquals(2, langs.get("Java"));
+        assertEquals(1, langs.get("JavaScript"));
+        assertNull(langs.get("Python")); // Because fork was filtered
+
+        // Assert total stars (10 + 5 + 2 = 17, repo3's 100 stars ignored because fork)
+        assertEquals(17, result.getTotalStars());
+
+        // Assert active repos (repo1, repo2 are active, repo4 is inactive, repo3 filtered)
         assertEquals(2, result.getActiveRepos());
-        assertNotEquals("never", result.getLastActivity());
     }
 
     @Test
-    void scanUser_UserNotFound() {
-        // Arrange
-        when(webClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri(eq("/users/{u}"), anyString())).thenReturn(requestHeadersSpec);
-        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
-
-        // Emulate error from WebClient (e.g. 404 Not Found)
-        when(responseSpec.bodyToMono(GitHubProfile.class)).thenReturn(Mono.error(new RuntimeException("404 Not Found")));
-
-        // Act & Assert
-        // The service intercepts the error and wraps it in a RuntimeException with "User not found: <username>"
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> gitHubService.scanUser("unknownuser"));
-        assertTrue(exception.getMessage().contains("User not found: unknownuser"));
-    }
-
-    @Test
-    void scanUser_NoRepos() {
-        // Arrange
+    void scanUser_NullsAndMissingData() {
         GitHubProfile profile = new GitHubProfile();
         profile.setLogin("testuser");
 
-        mockWebClient(profile, new GitHubRepo[0]);
+        GitHubRepo repo1 = new GitHubRepo();
+        repo1.setName("repo1");
+        repo1.setFork(false);
+        repo1.setLanguage(null);
+        repo1.setStargazers_count(null);
+        repo1.setPushed_at(null);
 
-        // Act
+        GitHubRepo[] repos = {repo1};
+
+        mockWebClient(profile, repos, false);
+
         ScanResult result = gitHubService.scanUser("testuser");
 
-        // Assert
-        assertNotNull(result);
-        assertTrue(result.getRepos().isEmpty());
-        assertTrue(result.getLanguageBreakdown().isEmpty());
-        assertEquals(0, result.getTotalStars());
-        assertEquals(0, result.getActiveRepos());
-        assertEquals("never", result.getLastActivity());
-    }
-
-    @Test
-    void scanUser_NullLanguagesAndStars() {
-        // Arrange
-        GitHubProfile profile = new GitHubProfile();
-        profile.setLogin("testuser");
-
-        GitHubRepo repo = new GitHubRepo();
-        repo.setFork(false);
-        repo.setLanguage(null);
-        repo.setStargazers_count(null);
-        repo.setPushed_at(null);
-
-        GitHubRepo[] repos = {repo};
-
-        mockWebClient(profile, repos);
-
-        // Act
-        ScanResult result = gitHubService.scanUser("testuser");
-
-        // Assert
         assertNotNull(result);
         assertEquals(1, result.getRepos().size());
+
+        // Assert language breakdown handles null gracefully
         assertTrue(result.getLanguageBreakdown().isEmpty());
+
+        // Assert total stars default to 0
+        assertEquals(0, result.getTotalStars());
+
+        // Assert active repos handles null pushed_at
+        assertEquals(0, result.getActiveRepos());
+
+        // Assert last activity
+        assertEquals("never", result.getLastActivity());
+    }
+
+    @Test
+    void scanUser_ProfileNotFound() {
+        mockWebClient(null, null, true);
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            gitHubService.scanUser("testuser");
+        });
+
+        assertTrue(exception.getMessage().contains("User not found"));
+    }
+
+    @Test
+    void scanUser_NullReposResponse() {
+        GitHubProfile profile = new GitHubProfile();
+        profile.setLogin("testuser");
+
+        mockWebClient(profile, null, false);
+
+        // Re-mock specifically for null repos handling
+        when(responseSpecRepos.bodyToMono(GitHubRepo[].class)).thenReturn(Mono.empty());
+
+        ScanResult result = gitHubService.scanUser("testuser");
+
+        assertNotNull(result);
+        assertTrue(result.getRepos().isEmpty());
         assertEquals(0, result.getTotalStars());
         assertEquals(0, result.getActiveRepos());
-        assertEquals("never", result.getLastActivity());
+        assertTrue(result.getLanguageBreakdown().isEmpty());
     }
 }

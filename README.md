@@ -156,6 +156,8 @@ The backend depends on the following keys set in `backend/.env`:
 | :--- | :--- | :--- | :--- |
 | `GITHUB_TOKEN` | **Yes** | Classic Personal Access Token or Fine-Grained Token to bypass rate limits. | [GitHub Settings](https://github.com/settings/tokens) |
 | `GROQ_API_KEY` | **Yes** | Groq Cloud platform token used for fast Llama model queries. | [Groq Console](https://console.groq.com/keys) |
+| `DB_USERNAME` | No | Database username. Defaults to `sa` if not provided. | N/A |
+| `DB_PASSWORD` | No | Database password. Defaults to `password` if not provided. | N/A |
 
 ### Frontend Configuration
 By default, the React client points to `http://localhost:8080`. If you run the API backend on a different port or host, specify it in your shell environment or a `.env` file inside the `frontend/` directory:

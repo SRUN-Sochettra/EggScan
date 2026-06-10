@@ -27,5 +27,9 @@ public class ScanRecord {
     @Column(columnDefinition = "TEXT")
     private String jsonPayload;
 
+    private String avatarUrl;
+
+    private String vibe;
+
     private LocalDateTime scannedAt;
 }

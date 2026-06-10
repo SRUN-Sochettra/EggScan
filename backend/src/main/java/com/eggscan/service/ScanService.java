@@ -16,8 +16,10 @@ import java.util.UUID;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.eggscan.dto.BattleResponse;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class ScanService {
 
     private final GitHubService gitHubService;
@@ -53,32 +55,36 @@ public class ScanService {
         }
     }
 
-    public List<ScanResponse> getLeaderboard() {
+    public List<com.eggscan.dto.LeaderboardEntry> getLeaderboard() {
         return scanRecordRepository.findTop10ByOrderByScoreDesc().stream().map(record -> {
-            try {
-                ScanResponse response = objectMapper.readValue(record.getJsonPayload(), ScanResponse.class);
-                response.setId(record.getId());
-                return response;
-            } catch (Exception e) {
-                return null;
-            }
-        }).filter(java.util.Objects::nonNull).collect(Collectors.toList());
+            return com.eggscan.dto.LeaderboardEntry.builder()
+                    .id(record.getId())
+                    .username(record.getUsername())
+                    .avatarUrl(record.getAvatarUrl())
+                    .vibe(record.getVibe())
+                    .eggScore(record.getScore())
+                    .eggVerdict(record.getVerdict())
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     public ScanResponse scan(String username, String mode) {
-        Optional<ScanResponse> cachedResponse = getCachedResponse(username, mode);
+        log.info("Scanning username: {}", username);
+
+        Optional<ScanResponse> cachedResponse = getCachedScanIfEligible(username, mode);
         if (cachedResponse.isPresent()) {
             return cachedResponse.get();
         }
 
         ScanResponse response = performNewScan(username, mode);
-        cacheResponseIfNeeded(response, mode);
+        cacheResultIfEligible(response, mode);
 
         return response;
     }
 
-    private Optional<ScanResponse> getCachedResponse(String username, String mode) {
-        if (!isCacheableMode(mode)) {
+    private Optional<ScanResponse> getCachedScanIfEligible(String username, String mode) {
+        // Serve from cache ONLY if mode matches the cached record (currently we only cache 'honest' mode)
+        if (!isHonestMode(mode)) {
             return Optional.empty();
         }
 
@@ -87,17 +93,18 @@ public class ScanService {
             try {
                 ScanResponse cachedResponse = objectMapper.readValue(recentScan.get().getJsonPayload(), ScanResponse.class);
                 cachedResponse.setId(recentScan.get().getId());
+                log.info("Returning cached scan result for username: {}", username);
                 return Optional.of(cachedResponse);
             } catch (Exception e) {
-                // fall through and return empty
+                log.warn("Failed to parse cached scan result for username: {}, falling back to re-scan", username, e);
             }
         }
         return Optional.empty();
     }
 
-    private boolean isCacheableMode(String mode) {
-        return "honest".equalsIgnoreCase(mode) || mode == null;
-    }
+    private ScanResponse performNewScan(String username, String mode) {
+        // 1. Fetch core data
+        ScanResult data = gitHubService.scanUser(username);
 
     private ScanResponse performNewScan(String username, String mode) {
         ScanResult data = gitHubService.scanUser(username);
@@ -107,10 +114,10 @@ public class ScanService {
 
         AIInsights ai = analyzer.analyze(data, stats, readmes, mode);
 
-        return buildScanResponse(data, stats, ai);
+        return buildResponse(data, stats, ai);
     }
 
-    private ScanResponse buildScanResponse(ScanResult data, ContributionStats stats, AIInsights ai) {
+    private ScanResponse buildResponse(ScanResult data, ContributionStats stats, AIInsights ai) {
         return ScanResponse.builder()
                 .id(UUID.randomUUID().toString())
                 .username(data.getProfile().getLogin())
@@ -129,24 +136,30 @@ public class ScanService {
                 .build();
     }
 
-    private void cacheResponseIfNeeded(ScanResponse response, String mode) {
-        if (!isCacheableMode(mode)) {
-            return;
+    private void cacheResultIfEligible(ScanResponse response, String mode) {
+        // We only cache the 'honest' mode to populate the leaderboard and avoid serving roasts on permalinks by default.
+        if (isHonestMode(mode)) {
+            try {
+                ScanRecord record = ScanRecord.builder()
+                        .id(response.getId())
+                        .username(response.getUsername())
+                        .score(response.getEggScore())
+                        .verdict(response.getEggVerdict())
+                        .avatarUrl(response.getAvatarUrl())
+                        .vibe(response.getVibe())
+                        .jsonPayload(objectMapper.writeValueAsString(response))
+                        .scannedAt(LocalDateTime.now())
+                        .build();
+                scanRecordRepository.save(record);
+                log.info("Cached scan result for username: {}", response.getUsername());
+            } catch (Exception e) {
+                log.error("Failed to cache scan result for username: {}", response.getUsername(), e);
+            }
         }
+    }
 
-        try {
-            ScanRecord record = ScanRecord.builder()
-                    .id(response.getId())
-                    .username(response.getUsername())
-                    .score(response.getEggScore())
-                    .verdict(response.getEggVerdict())
-                    .jsonPayload(objectMapper.writeValueAsString(response))
-                    .scannedAt(LocalDateTime.now())
-                    .build();
-            scanRecordRepository.save(record);
-        } catch (Exception e) {
-            System.err.println("Failed to cache scan result: " + e.getMessage());
-        }
+    private boolean isHonestMode(String mode) {
+        return "honest".equalsIgnoreCase(mode) || mode == null;
     }
 
     private String emojiFor(String verdict) {

@@ -1,5 +1,6 @@
 package com.eggscan.controller;
 
+import com.eggscan.dto.BattleResponse;
 import com.eggscan.dto.ScanResponse;
 import com.eggscan.service.ScanService;
 import org.junit.jupiter.api.Test;
@@ -10,7 +11,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -25,53 +25,42 @@ public class ScanControllerTest {
     private ScanService scanService;
 
     @Test
-    public void scan_Returns200_WithDefaultMode() throws Exception {
+    void testBattle_Success() throws Exception {
         // Arrange
-        String username = "testuser";
-        ScanResponse mockResponse = ScanResponse.builder()
-                .username(username)
+        ScanResponse user1 = ScanResponse.builder().username("user1").build();
+        ScanResponse user2 = ScanResponse.builder().username("user2").build();
+        BattleResponse battleResponse = BattleResponse.builder()
+                .user1(user1)
+                .user2(user2)
+                .winnerUsername("user1")
+                .battleReport("Epic battle!")
                 .build();
 
-        when(scanService.scan(eq(username), eq("honest"))).thenReturn(mockResponse);
+        when(scanService.battle("user1", "user2")).thenReturn(battleResponse);
 
         // Act & Assert
-        mockMvc.perform(get("/api/scan/{username}", username)
-                .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/api/battle")
+                        .param("u1", "user1")
+                        .param("u2", "user2")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value(username));
+                .andExpect(jsonPath("$.winnerUsername").value("user1"))
+                .andExpect(jsonPath("$.battleReport").value("Epic battle!"))
+                .andExpect(jsonPath("$.user1.username").value("user1"))
+                .andExpect(jsonPath("$.user2.username").value("user2"));
     }
 
     @Test
-    public void scan_Returns200_WithCustomMode() throws Exception {
+    void testBattle_Error() throws Exception {
         // Arrange
-        String username = "testuser";
-        String mode = "roast";
-        ScanResponse mockResponse = ScanResponse.builder()
-                .username(username)
-                .build();
-
-        when(scanService.scan(eq(username), eq(mode))).thenReturn(mockResponse);
+        when(scanService.battle(anyString(), anyString())).thenThrow(new RuntimeException("Service Error"));
 
         // Act & Assert
-        mockMvc.perform(get("/api/scan/{username}", username)
-                .param("mode", mode)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value(username));
-    }
-
-    @Test
-    public void scan_Returns400_WhenExceptionThrown() throws Exception {
-        // Arrange
-        String username = "erroruser";
-        String errorMessage = "User not found";
-
-        when(scanService.scan(eq(username), anyString())).thenThrow(new RuntimeException(errorMessage));
-
-        // Act & Assert
-        mockMvc.perform(get("/api/scan/{username}", username)
-                .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/api/battle")
+                        .param("u1", "user1")
+                        .param("u2", "user2")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value(errorMessage));
+                .andExpect(jsonPath("$.error").value("Service Error"));
     }
 }

@@ -61,6 +61,6 @@ public class ScanControllerTest {
                         .param("u2", "user2")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Service Error"));
+                .andExpect(jsonPath("$.error").value("An error occurred while processing the request"));
     }
 }

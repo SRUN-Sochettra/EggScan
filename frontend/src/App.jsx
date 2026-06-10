@@ -11,12 +11,12 @@ export default function App() {
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
 
-  const handleScan = async (username) => {
+  const handleScan = async (username, mode) => {
     setLoading(true)
     setError(null)
     setResult(null)
     try {
-      const data = await scanGithub(username)
+      const data = await scanGithub(username, mode)
       setResult(data)
     } catch (e) {
       setError(e.message)

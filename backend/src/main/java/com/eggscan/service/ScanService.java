@@ -26,7 +26,7 @@ public class ScanService {
         this.analyzer = analyzer;
     }
 
-    public ScanResponse scan(String username) {
+    public ScanResponse scan(String username, String mode) {
         // 1. Fetch core data
         ScanResult data = gitHubService.scanUser(username);
 
@@ -38,7 +38,7 @@ public class ScanService {
         data.setReposWithReadme(readmeService.countReposWithReadme(readmes));
 
         // 4. Send everything to Groq
-        AIInsights ai = analyzer.analyze(data, stats, readmes);
+        AIInsights ai = analyzer.analyze(data, stats, readmes, mode);
 
         return ScanResponse.builder()
                 .username(data.getProfile().getLogin())
@@ -53,6 +53,7 @@ public class ScanService {
                 .improvements(ai.getImprovements())
                 .vibe(ai.getVibe())
                 .rawData(data)
+                .stats(stats)
                 .build();
     }
 

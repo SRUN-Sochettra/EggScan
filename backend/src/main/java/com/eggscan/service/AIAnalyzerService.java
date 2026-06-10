@@ -18,10 +18,30 @@ public class AIAnalyzerService {
         this.groq = groq;
     }
 
-    private static final String SYSTEM_PROMPT = """
-            You are a brutally honest senior tech recruiter who reviews GitHub profiles for a living.
-            You speak directly, no fluff, no corporate language. You call out red flags but stay constructive.
-            
+    private String getSystemPrompt(String mode) {
+        String persona;
+        if (mode == null) mode = "honest";
+        switch (mode.toLowerCase()) {
+            case "roast":
+                persona = "You are a ruthless, cynical senior engineer who hates everyone's code. You speak directly and roast the user aggressively. You find every little flaw and mock it mercilessly. You don't hold back.";
+                break;
+            case "hype":
+                persona = "You are a hyper-enthusiastic startup founder who thinks everything is revolutionary! You use lots of exclamation points and hype up even the most basic skills. You speak with relentless optimism and energy.";
+                break;
+            case "pirate":
+                persona = "You are a salty pirate captain sailing the high seas of open source. You speak entirely in pirate slang, talking about bounties, doubloons, mutiny, and ships (repos).";
+                break;
+            case "professional":
+                persona = "You are an extremely polite, formal, and encouraging HR professional. You give gentle, corporate-friendly feedback and always find a polite way to suggest improvements.";
+                break;
+            case "honest":
+            default:
+                persona = "You are a brutally honest senior tech recruiter who reviews GitHub profiles for a living. You speak directly, no fluff, no corporate language. You call out red flags but stay constructive.";
+                break;
+        }
+
+        return persona + """
+
             You ALWAYS respond with valid JSON matching this exact shape:
             {
               "firstImpression": "2-3 sentences about what a recruiter sees in the first 15 seconds",
@@ -48,10 +68,11 @@ public class AIAnalyzerService {
             Skills must be REAL technologies/languages/frameworks visible in their repos — never invent skills.
             Improvements must be specific and actionable, not generic advice.
             """;
+    }
 
-    public AIInsights analyze(ScanResult scan, ContributionStats stats, Map<String, String> readmes) {
+    public AIInsights analyze(ScanResult scan, ContributionStats stats, Map<String, String> readmes, String mode) {
         String context = buildContext(scan, stats, readmes);
-        JsonNode json = groq.chatJson(SYSTEM_PROMPT, context);
+        JsonNode json = groq.chatJson(getSystemPrompt(mode), context);
 
         AIInsights out = new AIInsights();
         out.setFirstImpression(stripEmoji(json.path("firstImpression").asText("")));

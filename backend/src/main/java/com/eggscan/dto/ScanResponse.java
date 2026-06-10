@@ -20,4 +20,5 @@ public class ScanResponse {
     private List<String> improvements;
     private String vibe;
     private ScanResult rawData;
+    private com.eggscan.model.ContributionStats stats;
 }

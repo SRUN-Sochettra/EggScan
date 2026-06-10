@@ -18,9 +18,9 @@ public class ScanController {
     }
 
     @GetMapping("/scan/{username}")
-    public ResponseEntity<?> scan(@PathVariable String username) {
+    public ResponseEntity<?> scan(@PathVariable String username, @RequestParam(required = false, defaultValue = "honest") String mode) {
         try {
-            ScanResponse response = scanService.scan(username);
+            ScanResponse response = scanService.scan(username, mode);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest()

@@ -97,4 +97,35 @@ public class ScanServiceTest {
 
         assertEquals("Failed to parse cached scan result", exception.getMessage());
     }
+
+
+    @Test
+    void getLeaderboard_ReturnsTop10Entries_GroupedByUser() {
+        when(scanRecordRepository.findLeaderboard(any(org.springframework.data.domain.Pageable.class))).thenReturn(java.util.List.of(
+                ScanRecord.builder()
+                        .id("uuid1")
+                        .username("user1")
+                        .score(90)
+                        .verdict("Golden Egg")
+                        .avatarUrl("url1")
+                        .vibe("vibe1")
+                        .build(),
+                ScanRecord.builder()
+                        .id("uuid2")
+                        .username("user2")
+                        .score(85)
+                        .verdict("Fresh Egg")
+                        .avatarUrl("url2")
+                        .vibe("vibe2")
+                        .build()
+        ));
+
+        java.util.List<com.eggscan.dto.LeaderboardEntry> result = scanService.getLeaderboard();
+
+        assertEquals(2, result.size());
+        assertEquals("user1", result.get(0).getUsername());
+        assertEquals(90, result.get(0).getEggScore());
+        assertEquals("user2", result.get(1).getUsername());
+        assertEquals(85, result.get(1).getEggScore());
+    }
 }

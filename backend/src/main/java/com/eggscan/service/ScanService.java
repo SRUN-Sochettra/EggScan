@@ -7,6 +7,7 @@ import com.eggscan.model.ScanResult;
 import com.eggscan.model.ScanRecord;
 import com.eggscan.repository.ScanRecordRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -56,7 +57,7 @@ public class ScanService {
     }
 
     public List<com.eggscan.dto.LeaderboardEntry> getLeaderboard() {
-        return scanRecordRepository.findTop10ByOrderByScoreDesc().stream().map(record -> {
+        return scanRecordRepository.findLeaderboard(PageRequest.of(0, 10)).stream().map(record -> {
             return com.eggscan.dto.LeaderboardEntry.builder()
                     .id(record.getId())
                     .username(record.getUsername())

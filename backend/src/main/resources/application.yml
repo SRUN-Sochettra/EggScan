@@ -15,11 +15,11 @@ spring:
       ddl-auto: update
 
 github:
-  token: ${GITHUB_TOKEN}
+  token: ${GITHUB_TOKEN:}
   api-url: https://api.github.com
   graphql-url: https://api.github.com/graphql
 
 groq:
-  api-key: ${GROQ_API_KEY}
+  api-key: ${GROQ_API_KEY:}
   api-url: https://api.groq.com/openai/v1
   model: llama-3.1-8b-instant

@@ -1,0 +1,3 @@
+## 2026-06-11 - [Spring Boot CompletableFuture Thread Management]
+**Learning:** When using `CompletableFuture.supplyAsync()` in a Spring Boot application for concurrent operations (like external API calls), relying on the default `ForkJoinPool.commonPool()` can lead to thread starvation if the tasks involve blocking I/O. Additionally, you may lose Spring thread-local contexts (e.g., SecurityContext, RequestContext).
+**Action:** Always provide a dedicated `ExecutorService` (like a configured `ThreadPoolTaskExecutor`) as the second argument to `CompletableFuture.supplyAsync()` when performing I/O-bound concurrent tasks in Spring Boot.

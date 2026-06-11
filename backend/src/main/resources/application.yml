@@ -5,10 +5,10 @@ spring:
   application:
     name: eggscan
   datasource:
-    url: jdbc:postgresql://aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres?sslmode=require
+    url: ${DB_URL}
     driverClassName: org.postgresql.Driver
-    username: postgres.qingusrbmyctvvkttkgm
-    password: "Chettra12$$"
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:

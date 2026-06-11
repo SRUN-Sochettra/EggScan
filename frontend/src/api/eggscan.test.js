@@ -3,6 +3,8 @@ import { scanGithub, battleGithub, getLeaderboard, getScanResult } from './eggsc
 
 const BASE = 'http://localhost:8080';
 
+import { deepDiveRepo } from "./eggscan.js"
+
 describe('eggscan API', () => {
   beforeEach(() => {
     global.fetch = vi.fn();
@@ -184,3 +186,38 @@ describe('eggscan API', () => {
     });
   });
 });
+
+  describe('deepDiveRepo', () => {
+    it('returns json when response is ok with default branch', async () => {
+      const mockData = { summary: 'Repo summary' }
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockData,
+      })
+
+      const result = await deepDiveRepo('testuser', 'testrepo')
+      expect(result).toEqual(mockData)
+      expect(fetch).toHaveBeenCalledWith('http://localhost:8080/api/scan/testuser/repo/testrepo?defaultBranch=main')
+    })
+
+    it('returns json when response is ok with custom branch', async () => {
+      const mockData = { summary: 'Repo summary' }
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockData,
+      })
+
+      const result = await deepDiveRepo('testuser', 'testrepo', 'develop')
+      expect(result).toEqual(mockData)
+      expect(fetch).toHaveBeenCalledWith('http://localhost:8080/api/scan/testuser/repo/testrepo?defaultBranch=develop')
+    })
+
+    it('throws error when response is not ok', async () => {
+      fetch.mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: 'Deep dive failed' }),
+      })
+
+      await expect(deepDiveRepo('testuser', 'testrepo')).rejects.toThrow('Deep dive failed')
+    })
+  })

@@ -12,6 +12,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.eggscan.model.GitHubTreeResponse;
+import com.eggscan.model.GitHubContentResponse;
+import com.eggscan.model.GitHubCommitResponse;
+import java.util.Base64;
+
+
 @Service
 public class GitHubService {
 
@@ -85,4 +91,42 @@ public class GitHubService {
                 .block();
         return repos == null ? List.of() : Arrays.asList(repos);
     }
+
+    public GitHubTreeResponse fetchRepoTree(String username, String repoName, String defaultBranch) {
+        return client.get()
+                .uri("/repos/{u}/{r}/git/trees/{b}?recursive=1", username, repoName, defaultBranch)
+                .retrieve()
+                .bodyToMono(GitHubTreeResponse.class)
+                .onErrorResume(e -> Mono.empty())
+                .block();
+    }
+
+    public String fetchFileContent(String username, String repoName, String path) {
+        GitHubContentResponse contentRes = client.get()
+                .uri("/repos/{u}/{r}/contents/{p}", username, repoName, path)
+                .retrieve()
+                .bodyToMono(GitHubContentResponse.class)
+                .onErrorResume(e -> Mono.empty())
+                .block();
+
+        if (contentRes != null && contentRes.getContent() != null && "base64".equals(contentRes.getEncoding())) {
+            try {
+                return new String(Base64.getMimeDecoder().decode(contentRes.getContent()));
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    public List<GitHubCommitResponse> fetchRecentCommits(String username, String repoName) {
+        GitHubCommitResponse[] commits = client.get()
+                .uri("/repos/{u}/{r}/commits?per_page=10", username, repoName)
+                .retrieve()
+                .bodyToMono(GitHubCommitResponse[].class)
+                .onErrorResume(e -> Mono.just(new GitHubCommitResponse[0]))
+                .block();
+        return commits == null ? List.of() : Arrays.asList(commits);
+    }
+
 }

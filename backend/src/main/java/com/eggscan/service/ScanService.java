@@ -23,6 +23,8 @@ import com.eggscan.model.GitHubTreeResponse;
 import com.eggscan.model.GitHubTreeItem;
 import com.eggscan.model.GitHubCommitResponse;
 import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,19 +38,22 @@ public class ScanService {
     private final AIAnalyzerService analyzer;
     private final ScanRecordRepository scanRecordRepository;
     private final ObjectMapper objectMapper;
+    private final Executor scanExecutor;
 
     public ScanService(GitHubService gitHubService,
                        GitHubGraphQLService graphQLService,
                        ReadmeService readmeService,
                        AIAnalyzerService analyzer,
                        ScanRecordRepository scanRecordRepository,
-                       ObjectMapper objectMapper) {
+                       ObjectMapper objectMapper,
+                       @org.springframework.beans.factory.annotation.Qualifier("scanExecutor") Executor scanExecutor) {
         this.gitHubService = gitHubService;
         this.graphQLService = graphQLService;
         this.readmeService = readmeService;
         this.analyzer = analyzer;
         this.scanRecordRepository = scanRecordRepository;
         this.objectMapper = objectMapper;
+        this.scanExecutor = scanExecutor;
     }
 
     public ScanResponse getScanById(String id) {
@@ -178,8 +183,17 @@ public class ScanService {
     }
 
     public BattleResponse battle(String username1, String username2) {
-        ScanResponse s1 = scan(username1, "honest");
-        ScanResponse s2 = scan(username2, "honest");
+        // Optimization: Fetch both user scans concurrently to halve the latency
+        // Expected performance impact: Reduces latency by ~50% since both external API requests run in parallel.
+        // Used dedicated scanExecutor to avoid ForkJoinPool.commonPool() thread starvation with blocking I/O calls
+        CompletableFuture<ScanResponse> future1 = CompletableFuture.supplyAsync(() -> scan(username1, "honest"), scanExecutor);
+        CompletableFuture<ScanResponse> future2 = CompletableFuture.supplyAsync(() -> scan(username2, "honest"), scanExecutor);
+
+        // Wait for both scans to complete
+        CompletableFuture.allOf(future1, future2).join();
+
+        ScanResponse s1 = future1.join();
+        ScanResponse s2 = future2.join();
 
         String[] battleResult = analyzer.battle(s1.getRawData(), s1.getStats(), s2.getRawData(), s2.getStats()).split("\\|\\|\\|");
         String winner = battleResult[0];

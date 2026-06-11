@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import html2canvas from 'html2canvas';
+import { toBlob } from 'html-to-image';
 
 export default function BattleResult({ data }) {
     const isU1Winner = data.winnerUsername === data.user1.username;
@@ -9,13 +9,13 @@ export default function BattleResult({ data }) {
         if (!reportRef.current) return;
 
         try {
-            const canvas = await html2canvas(reportRef.current, {
-                scale: 2,
-                useCORS: true,
+            const blob = await toBlob(reportRef.current, {
+                pixelRatio: 2,
                 backgroundColor: null,
             });
 
-            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            if (!blob) throw new Error('Failed to create blob from node');
+
             const file = new File([blob], 'battle-result.png', { type: 'image/png' });
 
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import html2canvas from 'html2canvas'
+import { toPng } from 'html-to-image'
 import { IconShare, IconTwitter } from '../Icons'
 
 const TAGLINES = {
@@ -69,11 +69,10 @@ Get rated ↓`
   const handleDownload = async () => {
     if (!resultRef.current) return
     try {
-      const canvas = await html2canvas(resultRef.current, {
+      const url = await toPng(resultRef.current, {
         backgroundColor: '#FFFDF7',
-        scale: 2,
+        pixelRatio: 2,
       })
-      const url = canvas.toDataURL('image/png')
       const a = document.createElement('a')
       a.href = url
       a.download = `eggscan-${data.username}.png`

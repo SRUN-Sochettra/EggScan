@@ -60,7 +60,14 @@ export default function RepoItem({ repo, username }) {
             <h4 className="font-bold text-brown-800 flex items-center gap-2">
               <span className="text-xl">🔬</span> AI Deep Dive
             </h4>
-            <button onClick={() => setAnalysis(null)} className="text-brown-400 hover:text-brown-600">✕</button>
+            <button
+              onClick={() => setAnalysis(null)}
+              className="text-brown-400 hover:text-brown-600 focus-visible:ring-2 focus-visible:ring-brown-500 rounded"
+              aria-label="Close analysis"
+              title="Close analysis"
+            >
+              ✕
+            </button>
           </div>
 
           <div className="space-y-3 mt-3">

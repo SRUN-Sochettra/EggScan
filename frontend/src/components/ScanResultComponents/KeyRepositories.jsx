@@ -10,7 +10,7 @@ export default function KeyRepositories({ data }) {
       </div>
       <div className="space-y-4">
         {data.stats?.pinnedRepos?.length > 0 ? (
-          data.stats.pinnedRepos.map((repo, i) => <RepoItem key={i} repo={repo} />)
+          data.stats.pinnedRepos.map((repo, i) => <RepoItem key={i} repo={repo} username={data.username} />)
         ) : (
           data.rawData?.repos?.slice(0, 3).map((repo, i) => (
             <RepoItem key={i} repo={{
@@ -18,7 +18,7 @@ export default function KeyRepositories({ data }) {
               description: repo.description,
               primaryLanguage: repo.language,
               stars: repo.stargazers_count
-            }} />
+            }} username={data.username} />
           ))
         )}
       </div>

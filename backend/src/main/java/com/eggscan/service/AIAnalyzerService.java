@@ -1,6 +1,11 @@
 package com.eggscan.service;
 
 import com.eggscan.dto.AIInsights;
+
+import com.eggscan.dto.RepoDeepDiveResponse;
+import com.eggscan.model.GitHubTreeResponse;
+import com.eggscan.model.GitHubCommitResponse;
+
 import com.eggscan.model.ContributionStats;
 import com.eggscan.model.PinnedRepo;
 import com.eggscan.model.ScanResult;
@@ -226,5 +231,61 @@ public class AIAnalyzerService {
 
     private String nullSafe(Object o) {
         return o == null ? "(none)" : o.toString();
+    }
+
+
+    public RepoDeepDiveResponse analyzeRepository(String username, String repoName, String readme, GitHubTreeResponse tree, Map<String, String> configFiles, List<GitHubCommitResponse> commits) {
+        StringBuilder context = new StringBuilder();
+        context.append("=== REPOSITORY: ").append(username).append("/").append(repoName).append(" ===\n");
+
+        context.append("\n--- README ---\n");
+        if (readme != null && !readme.isBlank()) {
+            context.append(readme.length() > 1500 ? readme.substring(0, 1500) + "..." : readme).append("\n");
+        } else {
+            context.append("(No README found)\n");
+        }
+
+        context.append("\n--- FILE TREE (Root/Key Folders) ---\n");
+        if (tree != null && tree.getTree() != null) {
+            tree.getTree().stream()
+                .limit(50)
+                .forEach(item -> context.append(item.getPath()).append(item.getType().equals("tree") ? "/" : "").append("\n"));
+        }
+
+        context.append("\n--- CONFIG FILES ---\n");
+        for (Map.Entry<String, String> entry : configFiles.entrySet()) {
+            context.append("[").append(entry.getKey()).append("]\n");
+            String content = entry.getValue();
+            context.append(content.length() > 500 ? content.substring(0, 500) + "..." : content).append("\n\n");
+        }
+
+        context.append("\n--- RECENT COMMITS ---\n");
+        commits.forEach(c -> context.append("- ").append(c.getCommit().getMessage().replace("\n", " ")).append("\n"));
+
+        String prompt = "You are a senior staff engineer performing a deep architectural and code quality review on a GitHub repository.\n" +
+            "Analyze the provided README, file tree, key configuration files, and recent commit messages.\n\n" +
+            "You ALWAYS respond with valid JSON matching this exact shape:\n" +
+            "{\n" +
+            "  \"summary\": \"A concise 2-sentence summary of what this repository is and its apparent maturity.\",\n" +
+            "  \"architectureAndStack\": \"Analysis of the tech stack (inferred from configs) and overall architectural approach.\",\n" +
+            "  \"codeStructureFeedback\": \"Critique of the folder/file structure. Is it standard? Messy? Well-organized?\",\n" +
+            "  \"commitQualityFeedback\": \"Review of their commit message habits. Are they descriptive or just 'wip'?\",\n" +
+            "  \"actionableImprovements\": [\"Specific fix 1\", \"Specific fix 2\"]\n" +
+            "}\n\n" +
+            "Be constructive, highly technical, and direct. Do not use emojis.";
+
+        com.fasterxml.jackson.databind.JsonNode json = groq.chatJson(prompt, context.toString());
+
+        RepoDeepDiveResponse response = new RepoDeepDiveResponse();
+        response.setSummary(json.path("summary").asText(""));
+        response.setArchitectureAndStack(json.path("architectureAndStack").asText(""));
+        response.setCodeStructureFeedback(json.path("codeStructureFeedback").asText(""));
+        response.setCommitQualityFeedback(json.path("commitQualityFeedback").asText(""));
+
+        List<String> improvements = new ArrayList<>();
+        json.path("actionableImprovements").forEach(n -> improvements.add(n.asText()));
+        response.setActionableImprovements(improvements);
+
+        return response;
     }
 }

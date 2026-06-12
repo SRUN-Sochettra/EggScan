@@ -27,7 +27,7 @@ export default function Leaderboard({ onScan }) {
     <>
       <button
         onClick={handleOpen}
-        className="fixed bottom-4 right-4 bg-white/80 backdrop-blur-sm border-2 border-brown-700 text-brown-700 font-bold py-2 px-4 rounded-full shadow-eggsm hover:bg-white transition-all z-50 font-display"
+        className="fixed bottom-4 right-4 bg-white/80 backdrop-blur-sm border-2 border-brown-700 text-brown-700 font-bold py-2 px-4 rounded-full shadow-eggsm hover:bg-white transition-all z-50 font-display focus-visible:ring-2 focus-visible:ring-brown-500 focus-visible:outline-none"
       >
         🏆 Hall of Fame
       </button>
@@ -40,7 +40,7 @@ export default function Leaderboard({ onScan }) {
               <button
                 onClick={() => setIsOpen(false)}
                 aria-label="Close leaderboard"
-                className="text-brown-700 font-bold text-xl hover:scale-110 transition-transform"
+                className="text-brown-700 font-bold text-xl hover:scale-110 transition-transform focus-visible:ring-2 focus-visible:ring-brown-500 focus-visible:outline-none rounded-md px-1"
               >
                 ✕
               </button>
@@ -54,13 +54,10 @@ export default function Leaderboard({ onScan }) {
               ) : (
                 <div className="space-y-3">
                   {leaderboard.map((scan, idx) => (
-                    <div
+                    <a
                       key={scan.id || idx}
-                      className="flex items-center gap-4 bg-white/60 p-3 rounded-xl border border-brown-200 hover:border-brown-400 cursor-pointer transition-colors"
-                      onClick={() => {
-                        window.history.pushState({}, '', `/?id=${scan.id}`);
-                        window.location.reload();
-                      }}
+                      href={`/?id=${scan.id}`}
+                      className="flex items-center gap-4 bg-white/60 p-3 rounded-xl border border-brown-200 hover:border-brown-400 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-brown-500 focus-visible:outline-none"
                     >
                       <div className="font-display font-black text-2xl text-brown-300 w-6 text-right">
                         #{idx + 1}
@@ -74,7 +71,7 @@ export default function Leaderboard({ onScan }) {
                         <div className="font-display font-black text-lg text-brown-700">{scan.eggScore}</div>
                         <div className="text-xs text-brown-500">{scan.eggVerdict}</div>
                       </div>
-                    </div>
+                    </a>
                   ))}
                 </div>
               )}

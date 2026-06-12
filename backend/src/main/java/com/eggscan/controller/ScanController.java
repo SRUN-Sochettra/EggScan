@@ -1,6 +1,9 @@
 package com.eggscan.controller;
 
 import com.eggscan.dto.ScanResponse;
+
+import com.eggscan.dto.RepoDeepDiveResponse;
+
 import com.eggscan.service.ScanService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -69,4 +72,17 @@ public class ScanController {
     public Map<String, String> health() {
         return Map.of("status", "ok", "service", "eggscan");
     }
+
+    @GetMapping("/scan/{username}/repo/{repoName}")
+    public ResponseEntity<?> repoDeepDive(@PathVariable String username, @PathVariable String repoName, @RequestParam(required = false, defaultValue = "main") String defaultBranch) {
+        try {
+            RepoDeepDiveResponse response = scanService.repoDeepDive(username, repoName, defaultBranch);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error occurred while analyzing repository: {}/{}", username, repoName, e);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "An error occurred while analyzing the repository"));
+        }
+    }
+
 }

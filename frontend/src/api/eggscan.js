@@ -47,3 +47,14 @@ export async function getScanResult(id) {
   }
   return res.json()
 }
+export async function deepDiveRepo(username, repoName, defaultBranch = 'main') {
+  const res = await fetch(`${BASE}/api/scan/${encodeURIComponent(username)}/repo/${encodeURIComponent(repoName)}?defaultBranch=${encodeURIComponent(defaultBranch)}`)
+  if (!res.ok) {
+    const err = await res.json().catch((e) => {
+      console.error('Failed to parse error response:', e)
+      return {}
+    })
+    throw new Error(err.error || 'Repo deep dive failed')
+  }
+  return res.json()
+}

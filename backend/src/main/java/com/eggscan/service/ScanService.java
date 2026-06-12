@@ -17,6 +17,13 @@ import java.util.UUID;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.eggscan.dto.BattleResponse;
+
+import com.eggscan.dto.RepoDeepDiveResponse;
+import com.eggscan.model.GitHubTreeResponse;
+import com.eggscan.model.GitHubTreeItem;
+import com.eggscan.model.GitHubCommitResponse;
+import java.util.HashMap;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -185,4 +192,33 @@ public class ScanService {
                 .battleReport(report)
                 .build();
     }
+
+    public RepoDeepDiveResponse repoDeepDive(String username, String repoName, String defaultBranch) {
+        log.info("Deep diving into repository: {}/{}", username, repoName);
+
+        GitHubTreeResponse tree = gitHubService.fetchRepoTree(username, repoName, defaultBranch);
+        List<GitHubCommitResponse> commits = gitHubService.fetchRecentCommits(username, repoName);
+
+        String readme = gitHubService.fetchFileContent(username, repoName, "README.md");
+        if (readme == null) {
+            readme = gitHubService.fetchFileContent(username, repoName, "readme.md");
+        }
+
+        Map<String, String> configFiles = new HashMap<>();
+        List<String> filesToLookFor = List.of("package.json", "pom.xml", "docker-compose.yml", "requirements.txt", "build.gradle", "go.mod");
+
+        if (tree != null && tree.getTree() != null) {
+            for (GitHubTreeItem item : tree.getTree()) {
+                if (filesToLookFor.contains(item.getPath())) {
+                    String content = gitHubService.fetchFileContent(username, repoName, item.getPath());
+                    if (content != null) {
+                        configFiles.put(item.getPath(), content);
+                    }
+                }
+            }
+        }
+
+        return analyzer.analyzeRepository(username, repoName, readme, tree, configFiles, commits);
+    }
+
 }

@@ -1,0 +1,3 @@
+⚡ Bolt: Refactor ReadmeService to fetch READMEs concurrently
+
+Refactored `fetchTopReadmes` to use `Flux` and `flatMapSequential`, optimizing performance by running the network requests in parallel instead of sequentially. Also added documentation in `.jules/bolt.md`. Also fixed missing vitest in render.

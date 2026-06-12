@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,10 +34,22 @@ public class ReadmeService {
                 .toList();
 
         Map<String, String> out = new LinkedHashMap<>();
-        for (GitHubRepo r : top) {
-            String content = fetchReadme(username, r.getName());
-            out.put(r.getName(), content); // may be empty string
+
+        // ⚡ Bolt: Fetch READMEs concurrently using flatMapSequential instead of a blocking for-loop.
+        // This converts sequential blocking API calls (O(n) latency) into parallel requests,
+        // preserving the original sorting order and significantly reducing overall wait time.
+        List<Map.Entry<String, String>> results = Flux.fromIterable(top)
+                .flatMapSequential(r -> fetchReadmeAsync(username, r.getName())
+                        .map(content -> Map.entry(r.getName(), content)))
+                .collectList()
+                .block();
+
+        if (results != null) {
+            for (Map.Entry<String, String> entry : results) {
+                out.put(entry.getKey(), entry.getValue());
+            }
         }
+
         return out;
     }
 
@@ -43,21 +57,18 @@ public class ReadmeService {
         return (int) readmes.values().stream().filter(v -> v != null && !v.isBlank()).count();
     }
 
-    private String fetchReadme(String username, String repo) {
-        try {
-            JsonNode resp = client.get()
-                    .uri("/repos/{u}/{r}/readme", username, repo)
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .block();
-
-            String b64 = resp.path("content").asText("");
-            if (b64.isBlank()) return "";
-            String decoded = new String(Base64.getMimeDecoder().decode(b64));
-            // Truncate aggressively — we only feed a snippet to the AI
-            return decoded.length() > 1500 ? decoded.substring(0, 1500) : decoded;
-        } catch (Exception e) {
-            return "";
-        }
+    private Mono<String> fetchReadmeAsync(String username, String repo) {
+        return client.get()
+                .uri("/repos/{u}/{r}/readme", username, repo)
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .map(resp -> {
+                    String b64 = resp.path("content").asText("");
+                    if (b64.isBlank()) return "";
+                    String decoded = new String(Base64.getMimeDecoder().decode(b64));
+                    // Truncate aggressively — we only feed a snippet to the AI
+                    return decoded.length() > 1500 ? decoded.substring(0, 1500) : decoded;
+                })
+                .onErrorReturn("");
     }
 }

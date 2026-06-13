@@ -31,33 +31,32 @@ public class ReadmeService {
                 .limit(n)
                 .toList();
 
-        Map<String, String> out = new LinkedHashMap<>();
-        for (GitHubRepo r : top) {
-            String content = fetchReadme(username, r.getName());
-            out.put(r.getName(), content); // may be empty string
-        }
-        return out;
+        // ⚡ Bolt: Fetch READMEs concurrently instead of sequential blocking
+        Map<String, String> result = reactor.core.publisher.Flux.fromIterable(top)
+                .flatMapSequential(r -> fetchReadme(username, r.getName())
+                        .map(content -> Map.entry(r.getName(), content)))
+                .collectMap(Map.Entry::getKey, Map.Entry::getValue, LinkedHashMap::new)
+                .block();
+
+        return result != null ? result : new LinkedHashMap<>();
     }
 
     public int countReposWithReadme(Map<String, String> readmes) {
         return (int) readmes.values().stream().filter(v -> v != null && !v.isBlank()).count();
     }
 
-    private String fetchReadme(String username, String repo) {
-        try {
-            JsonNode resp = client.get()
-                    .uri("/repos/{u}/{r}/readme", username, repo)
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .block();
-
-            String b64 = resp.path("content").asText("");
-            if (b64.isBlank()) return "";
-            String decoded = new String(Base64.getMimeDecoder().decode(b64));
-            // Truncate aggressively — we only feed a snippet to the AI
-            return decoded.length() > 1500 ? decoded.substring(0, 1500) : decoded;
-        } catch (Exception e) {
-            return "";
-        }
+    private reactor.core.publisher.Mono<String> fetchReadme(String username, String repo) {
+        return client.get()
+                .uri("/repos/{u}/{r}/readme", username, repo)
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .map(resp -> {
+                    String b64 = resp.path("content").asText("");
+                    if (b64.isBlank()) return "";
+                    String decoded = new String(Base64.getMimeDecoder().decode(b64));
+                    // Truncate aggressively — we only feed a snippet to the AI
+                    return decoded.length() > 1500 ? decoded.substring(0, 1500) : decoded;
+                })
+                .onErrorReturn("");
     }
 }

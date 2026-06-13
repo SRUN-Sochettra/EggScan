@@ -23,6 +23,22 @@ export default function Leaderboard({ onScan }) {
     fetchLeaderboard();
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
   return (
     <>
       <button
@@ -33,7 +49,12 @@ export default function Leaderboard({ onScan }) {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsOpen(false);
+          }}
+        >
           <div className="bg-[#FFFDF7] rounded-3xl shadow-xl border-4 border-brown-700 w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh] animate-[pop_0.2s_ease-out]">
             <div className="p-5 border-b-4 border-brown-700 flex justify-between items-center bg-[#FCE9B8]">
               <h2 className="font-display font-black text-2xl text-brown-700">Hall of Fame</h2>

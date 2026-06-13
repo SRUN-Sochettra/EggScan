@@ -1,15 +1,14 @@
 package com.eggscan.controller;
 
 import com.eggscan.dto.ScanResponse;
-
 import com.eggscan.dto.RepoDeepDiveResponse;
-
 import com.eggscan.service.ScanService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api")
@@ -18,12 +17,34 @@ public class ScanController {
 
     private final ScanService scanService;
 
+    // GitHub username: max 39 characters, alphanumeric and single hyphens, cannot begin or end with a hyphen
+    private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$");
+    // Repo name: max 100 characters, alphanumeric, hyphens, underscores, dots
+    private static final Pattern REPO_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9._-]{1,100}$");
+    // UUID v4 pattern
+    private static final Pattern UUID_PATTERN = Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", Pattern.CASE_INSENSITIVE);
+
     public ScanController(ScanService scanService) {
         this.scanService = scanService;
     }
 
+    private boolean isValidUsername(String username) {
+        return username != null && USERNAME_PATTERN.matcher(username).matches();
+    }
+
+    private boolean isValidRepoName(String repoName) {
+        return repoName != null && REPO_NAME_PATTERN.matcher(repoName).matches();
+    }
+
+    private boolean isValidUuid(String id) {
+        return id != null && UUID_PATTERN.matcher(id).matches();
+    }
+
     @GetMapping("/scan/{username}")
     public ResponseEntity<?> scan(@PathVariable String username, @RequestParam(required = false, defaultValue = "honest") String mode) {
+        if (!isValidUsername(username)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid username format"));
+        }
         try {
             ScanResponse response = scanService.scan(username, mode);
             return ResponseEntity.ok(response);
@@ -36,6 +57,9 @@ public class ScanController {
 
     @GetMapping("/battle")
     public ResponseEntity<?> battle(@RequestParam String u1, @RequestParam String u2) {
+        if (!isValidUsername(u1) || !isValidUsername(u2)) {
+             return ResponseEntity.badRequest().body(Map.of("error", "Invalid username format"));
+        }
         try {
             return ResponseEntity.ok(scanService.battle(u1, u2));
         } catch (Exception e) {
@@ -47,6 +71,9 @@ public class ScanController {
 
     @GetMapping("/scan/result/{id}")
     public ResponseEntity<?> getScanById(@PathVariable String id) {
+        if (!isValidUuid(id)) {
+             return ResponseEntity.badRequest().body(Map.of("error", "Invalid ID format"));
+        }
         try {
             ScanResponse response = scanService.getScanById(id);
             return ResponseEntity.ok(response);
@@ -75,6 +102,12 @@ public class ScanController {
 
     @GetMapping("/scan/{username}/repo/{repoName}")
     public ResponseEntity<?> repoDeepDive(@PathVariable String username, @PathVariable String repoName, @RequestParam(required = false, defaultValue = "main") String defaultBranch) {
+        if (!isValidUsername(username)) {
+             return ResponseEntity.badRequest().body(Map.of("error", "Invalid username format"));
+        }
+        if (!isValidRepoName(repoName)) {
+             return ResponseEntity.badRequest().body(Map.of("error", "Invalid repository name format"));
+        }
         try {
             RepoDeepDiveResponse response = scanService.repoDeepDive(username, repoName, defaultBranch);
             return ResponseEntity.ok(response);

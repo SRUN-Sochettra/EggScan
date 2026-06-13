@@ -20,7 +20,8 @@ export default function ScanForm({ onScan, loading }) {
           <input
             type="text"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''))}
+            maxLength={39}
             placeholder="your-github-username"
             aria-label="GitHub username"
             className="input-egg w-full"

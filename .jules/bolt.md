@@ -1,0 +1,3 @@
+## 2026-06-14 - WebFlux Concurrent Fetching Latency Optimization
+**Learning:** Sequential blocking network calls in Spring WebFlux backends cause severe O(n) latency bottlenecks, specifically when performing iterative `WebClient.get().block()` operations.
+**Action:** Always avoid sequential blocking inside loops. Use `Flux.fromIterable().flatMapSequential(...)` (or `flatMap` / `concatMap` depending on order requirements) to execute independent WebClient requests concurrently while safely maintaining the original collection order, reducing total response time from O(n) to O(1) bound to the slowest response.

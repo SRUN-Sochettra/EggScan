@@ -54,9 +54,9 @@ export default function Leaderboard({ onScan }) {
               ) : (
                 <div className="space-y-3">
                   {leaderboard.map((scan, idx) => (
-                    <div
+                    <button
                       key={scan.id || idx}
-                      className="flex items-center gap-4 bg-white/60 p-3 rounded-xl border border-brown-200 hover:border-brown-400 cursor-pointer transition-colors"
+                      className="w-full text-left flex items-center gap-4 bg-white/60 p-3 rounded-xl border border-brown-200 hover:border-brown-400 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-brown-500 outline-none"
                       onClick={() => {
                         window.history.pushState({}, '', `/?id=${scan.id}`);
                         window.location.reload();
@@ -65,7 +65,7 @@ export default function Leaderboard({ onScan }) {
                       <div className="font-display font-black text-2xl text-brown-300 w-6 text-right">
                         #{idx + 1}
                       </div>
-                      <img src={scan.avatarUrl} alt="" className="w-10 h-10 rounded-full border border-brown-700" />
+                      <img src={scan.avatarUrl} alt={`${scan.username}'s avatar`} className="w-10 h-10 rounded-full border border-brown-700" />
                       <div className="flex-1 min-w-0">
                         <div className="font-bold text-brown-700 truncate">{scan.username}</div>
                         <div className="text-xs text-brown-500 truncate">{scan.vibe}</div>
@@ -74,7 +74,7 @@ export default function Leaderboard({ onScan }) {
                         <div className="font-display font-black text-lg text-brown-700">{scan.eggScore}</div>
                         <div className="text-xs text-brown-500">{scan.eggVerdict}</div>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}

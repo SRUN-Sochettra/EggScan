@@ -1,6 +1,3 @@
-## 2026-06-15 - Concurrent GitHub API Calls
-**Learning:** Found sequential blocking network calls in `ReadmeService.java` which causes O(n) latency during backend API interactions.
-**Action:** Replaced iterative blocking calls with concurrent execution using `Flux.fromIterable().flatMapSequential(...)` to ensure API requests are made concurrently while preserving the original ordered Map structure, improving performance significantly when fetching multiple file contents.
-## 2026-06-17 - Prevent Render Deployment Crash on Empty PORT
-**Learning:** Spring Boot needs a fallback value for the server port when deployed on Render because Render evaluates the configuration differently on startup before injecting the `PORT` environment variable completely, causing the app to crash or hang.
-**Action:** Ensure that `server.port` always has a fallback in all Spring configuration profiles (e.g., `${PORT:8080}`) to guarantee proper initialization.
+## 2024-06-25 - [Testing `try-catch` blocks and asynchronous states with React Testing Library]
+**Learning:** Testing React component loading and error states requires precise control over mock promises. Instead of simply mocking a resolved or rejected value, returning an unresolved Promise and storing the `resolve`/`reject` functions allows the test to explicitly verify the "loading" state in the DOM before resolving or rejecting to test the final state.
+**Action:** Use the `new Promise((resolve, reject) => { ... })` pattern in test setups for functions returning promises when intermediate UI states (like loading spinners or text) need to be verified during the asynchronous operation.

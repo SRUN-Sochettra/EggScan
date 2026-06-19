@@ -125,7 +125,7 @@ public class GitHubGraphQLServiceTest {
 
     @Test
     void fetchStats_ErrorPath_ReturnsEmptyStats() {
-        when(webClient.post()).thenThrow(new RuntimeException("Simulated WebClient exception"));
+        mockWebClientResponse(Mono.error(new RuntimeException("Simulated WebClient exception")));
 
         ContributionStats stats = gitHubGraphQLService.fetchStats("testuser");
 

@@ -80,9 +80,81 @@ describe('Leaderboard Component', () => {
     // Verify error was logged
     expect(consoleErrorSpy).toHaveBeenCalledWith(error);
 
-    // Verify loading state is reset and empty state is shown
-    expect(screen.getByText('No one has been scanned yet!')).toBeInTheDocument();
+    // Verify loading state is reset and error state is shown
+    expect(screen.getByText('Failed to load leaderboard. Please try again.')).toBeInTheDocument();
 
     consoleErrorSpy.mockRestore();
+  });
+
+  it('closes the modal when Escape key is pressed', async () => {
+    getLeaderboard.mockResolvedValue([]);
+    render(<Leaderboard />);
+
+    // Open modal
+    await userEvent.click(screen.getByRole('button', { name: '🏆 Hall of Fame' }));
+    expect(screen.getByText('Hall of Fame')).toBeInTheDocument();
+
+    // Press Escape
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByText('Hall of Fame')).not.toBeInTheDocument();
+  });
+
+  it('closes the modal when backdrop is clicked', async () => {
+    getLeaderboard.mockResolvedValue([]);
+    render(<Leaderboard />);
+
+    // Open modal
+    await userEvent.click(screen.getByRole('button', { name: '🏆 Hall of Fame' }));
+    expect(screen.getByText('Hall of Fame')).toBeInTheDocument();
+
+    // Find the backdrop and click it. Since backdrop is the div that contains everything and handles clicks,
+    // we can use testing library to find it by text or test-id. Or just click the wrapper.
+    const backdrop = screen.getByText('Hall of Fame').closest('div').parentElement.parentElement;
+    await userEvent.click(backdrop);
+
+    expect(screen.queryByText('Hall of Fame')).not.toBeInTheDocument();
+  });
+
+  it('does not close the modal when inner content is clicked', async () => {
+    getLeaderboard.mockResolvedValue([]);
+    render(<Leaderboard />);
+
+    // Open modal
+    await userEvent.click(screen.getByRole('button', { name: '🏆 Hall of Fame' }));
+
+    const innerContent = screen.getByText('Hall of Fame').parentElement;
+    await userEvent.click(innerContent);
+
+    expect(screen.getByText('Hall of Fame')).toBeInTheDocument();
+  });
+
+  it('navigates to user profile when a leaderboard item is clicked', async () => {
+    const mockData = [
+      { id: '123', username: 'user1', vibe: 'chill', eggScore: 9000, eggVerdict: 'godlike', avatarUrl: 'http://example.com/1.png' },
+    ];
+    getLeaderboard.mockResolvedValue(mockData);
+
+    const originalLocation = window.location;
+    // Mock window.history.pushState and window.location.reload
+    const pushStateSpy = vi.spyOn(window.history, 'pushState');
+    Object.defineProperty(window, 'location', {
+      value: { ...originalLocation, reload: vi.fn() },
+      writable: true
+    });
+
+    render(<Leaderboard />);
+
+    // Open modal
+    await userEvent.click(screen.getByRole('button', { name: '🏆 Hall of Fame' }));
+
+    // Wait for data to load
+    await waitFor(() => expect(screen.getByText('user1')).toBeInTheDocument());
+
+    // Click the item
+    await userEvent.click(screen.getByText('user1').closest('button'));
+
+    expect(pushStateSpy).toHaveBeenCalledWith({}, '', '/?id=123');
+    expect(window.location.reload).toHaveBeenCalled();
+    Object.defineProperty(window, 'location', { value: originalLocation, writable: true });
   });
 });

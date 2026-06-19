@@ -5,14 +5,17 @@ export default function Leaderboard({ onScan }) {
   const [isOpen, setIsOpen] = useState(false);
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const fetchLeaderboard = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await getLeaderboard();
       setLeaderboard(data);
     } catch (e) {
       console.error(e);
+      setError('Failed to load leaderboard. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -70,6 +73,8 @@ export default function Leaderboard({ onScan }) {
             <div className="p-5 overflow-y-auto flex-1">
               {loading ? (
                 <div className="text-center text-brown-500 py-10 font-bold">Loading legends...</div>
+              ) : error ? (
+                <div className="text-center text-red-500 py-10 font-bold">{error}</div>
               ) : leaderboard.length === 0 ? (
                 <div className="text-center text-brown-500 py-10 font-bold">No one has been scanned yet!</div>
               ) : (

@@ -4,3 +4,6 @@
 ## 2026-06-19 - Added tests and error handling to Leaderboard
 **Learning:** Adding test coverage for basic unhandled exception paths (e.g. empty catch block) frequently uncovers UX opportunities like providing meaningful feedback for users rather than just swallowing errors.
 **Action:** When I notice an empty catch block while adding tests, I will proactively implement basic visual error states (like an error state message) to ensure a more robust and resilient UI component.
+## 2026-06-19 - Testing Mono exceptions in WebClient mocks
+**Learning:** When using Mockito to mock Spring WebFlux `WebClient` behaviors, returning `Mono.error()` from the mocked chain may not be sufficient to trigger synchronous exception handling blocks (like `catch (Exception e)`) around `.block()`. Instead, using `thenThrow()` directly on the mocked WebClient method execution (like `when(webClient.post()).thenThrow(...)`) correctly simulates synchronous exceptions thrown by `WebClient` methods.
+**Action:** When testing synchronous try-catch blocks that wrap reactive WebClient calls terminating in `.block()`, I will use `thenThrow()` on the mock setup instead of `Mono.error()` to accurately simulate exception paths.

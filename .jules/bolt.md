@@ -7,3 +7,6 @@
 ## 2026-06-19 - Testing Mono exceptions in WebClient mocks
 **Learning:** When using Mockito to mock Spring WebFlux `WebClient` behaviors, returning `Mono.error()` from the mocked chain may not be sufficient to trigger synchronous exception handling blocks (like `catch (Exception e)`) around `.block()`. Instead, using `thenThrow()` directly on the mocked WebClient method execution (like `when(webClient.post()).thenThrow(...)`) correctly simulates synchronous exceptions thrown by `WebClient` methods.
 **Action:** When testing synchronous try-catch blocks that wrap reactive WebClient calls terminating in `.block()`, I will use `thenThrow()` on the mock setup instead of `Mono.error()` to accurately simulate exception paths.
+## 2024-05-14 - Remove unused code (IconEgg)
+**Learning:** Found an unused React component `IconEgg` in `frontend/src/components/Icons.jsx`.
+**Action:** Removed dead code to reduce complexity and improve maintainability of the codebase, ensuring no unused imports or exports are left behind.

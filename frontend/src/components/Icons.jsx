@@ -8,17 +8,6 @@ const baseProps = {
   strokeLinejoin: 'round',
 }
 
-export function IconEgg({ size = 28, fill = '#FCE9B8' }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32">
-      <ellipse cx="16" cy="18" rx="10" ry="12" fill={fill} {...baseProps} />
-      <circle cx="13" cy="15" r="0.8" fill="#B89968" stroke="none" />
-      <circle cx="19" cy="20" r="0.8" fill="#B89968" stroke="none" />
-      <circle cx="15" cy="23" r="0.6" fill="#B89968" stroke="none" />
-    </svg>
-  )
-}
-
 export function IconMagnifier({ size = 28 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32">

@@ -14,3 +14,7 @@
 **Vulnerability:** The application was configured with a guessable default fallback password in the PostgreSQL database configuration (backend/src/main/resources/application.yml).
 **Learning:** Using predictable default values for database passwords in configuration files can expose the system to unauthorized access if environment variables are not correctly set.
 **Prevention:** Ensure that sensitive configuration properties either lack default values or fallback to empty strings so that missing environment variables cause connection failures rather than allowing insecure connections.
+
+## 2024-06-19 - Added timeout to WebClient configurations
+**Learning:** WebClient instances without explicit timeouts can cause resource exhaustion (e.g., thread pool starvation) and application unresponsiveness if external services (like the GitHub API) hang or respond too slowly. This is a common denial-of-service (DoS) vector.
+**Action:** Always configure `responseTimeout` on the underlying `HttpClient` when building `WebClient` instances to ensure requests fail fast and resources are released promptly.

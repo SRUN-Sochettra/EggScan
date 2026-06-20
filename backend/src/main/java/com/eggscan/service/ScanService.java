@@ -17,7 +17,10 @@ import java.util.UUID;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.eggscan.dto.BattleResponse;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import com.eggscan.dto.RepoDeepDiveResponse;
 import com.eggscan.model.GitHubTreeResponse;
 import com.eggscan.model.GitHubTreeItem;
@@ -36,19 +39,22 @@ public class ScanService {
     private final AIAnalyzerService analyzer;
     private final ScanRecordRepository scanRecordRepository;
     private final ObjectMapper objectMapper;
+    private final Executor scanExecutor;
 
     public ScanService(GitHubService gitHubService,
                        GitHubGraphQLService graphQLService,
                        ReadmeService readmeService,
                        AIAnalyzerService analyzer,
                        ScanRecordRepository scanRecordRepository,
-                       ObjectMapper objectMapper) {
+                       ObjectMapper objectMapper,
+                       @Qualifier("scanExecutor") Executor scanExecutor) {
         this.gitHubService = gitHubService;
         this.graphQLService = graphQLService;
         this.readmeService = readmeService;
         this.analyzer = analyzer;
         this.scanRecordRepository = scanRecordRepository;
         this.objectMapper = objectMapper;
+        this.scanExecutor = scanExecutor;
     }
 
     public ScanResponse getScanById(String id) {
@@ -178,8 +184,13 @@ public class ScanService {
     }
 
     public BattleResponse battle(String username1, String username2) {
-        ScanResponse s1 = scan(username1, "honest");
-        ScanResponse s2 = scan(username2, "honest");
+        CompletableFuture<ScanResponse> futureS1 = CompletableFuture.supplyAsync(() -> scan(username1, "honest"), scanExecutor);
+        CompletableFuture<ScanResponse> futureS2 = CompletableFuture.supplyAsync(() -> scan(username2, "honest"), scanExecutor);
+
+        CompletableFuture.allOf(futureS1, futureS2).join();
+
+        ScanResponse s1 = futureS1.join();
+        ScanResponse s2 = futureS2.join();
 
         String[] battleResult = analyzer.battle(s1.getRawData(), s1.getStats(), s2.getRawData(), s2.getStats()).split("\\|\\|\\|");
         String winner = battleResult[0];

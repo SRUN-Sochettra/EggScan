@@ -136,4 +136,17 @@ public class GitHubGraphQLServiceTest {
         assertEquals(List.of(), stats.getPinnedRepos());
         assertFalse(stats.isHasPinnedRepos());
     }
+    @Test
+    void fetchStats_WebClientDirectException_ReturnsEmptyStats() {
+        when(webClient.post()).thenThrow(new RuntimeException("Direct WebClient exception"));
+
+        ContributionStats stats = gitHubGraphQLService.fetchStats("testuser");
+
+        assertNotNull(stats);
+        assertEquals(0, stats.getTotalContributionsLastYear());
+        assertEquals(0, stats.getTotalIssues());
+        assertEquals(0, stats.getTotalPullRequests());
+        assertEquals(List.of(), stats.getPinnedRepos());
+        assertFalse(stats.isHasPinnedRepos());
+    }
 }

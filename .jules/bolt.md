@@ -23,3 +23,6 @@
 ## 2026-06-20 - Optimize GitHub API Calls with Flux flatMapSequential
 **Learning:** In Spring WebFlux, when needing to iterate over a list of items and perform asynchronous blocking calls (like fetching files via `WebClient`), using a basic sequential loop blocks execution per item, creating an N+1 latency problem.
 **Action:** Always replace sequential blocking I/O loops with `Flux.fromIterable(items).flatMapSequential(...)` when using WebFlux. This executes requests concurrently reducing the overall latency to O(1) in ideal conditions while preserving the response order. Remember to return reactive types (`Mono`) up the chain where possible instead of using `.block()`.
+## 2026-06-20 - Test for Direct WebClient Exception
+**Learning:** In Spring WebFlux, exceptions thrown directly by `WebClient.post()` (before the reactive chain is built) might not be covered by mocked Mono error returns. Adding tests for direct `RuntimeException` exceptions helps cover code paths for the outer try-catch block.
+**Action:** When testing WebClient exception handling, ensure to simulate both reactive `Mono.error()` stream errors and direct method exceptions.

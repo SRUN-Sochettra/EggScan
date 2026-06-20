@@ -101,22 +101,27 @@ public class GitHubService {
                 .block();
     }
 
-    public String fetchFileContent(String username, String repoName, String path) {
-        GitHubContentResponse contentRes = client.get()
+    public Mono<String> fetchFileContentMono(String username, String repoName, String path) {
+        return client.get()
                 .uri("/repos/{u}/{r}/contents/{p}", username, repoName, path)
                 .retrieve()
                 .bodyToMono(GitHubContentResponse.class)
-                .onErrorResume(e -> Mono.empty())
-                .block();
+                .map(contentRes -> {
+                    if (contentRes != null && contentRes.getContent() != null && "base64".equals(contentRes.getEncoding())) {
+                        try {
+                            return new String(Base64.getMimeDecoder().decode(contentRes.getContent()));
+                        } catch (Exception e) {
+                            return "";
+                        }
+                    }
+                    return "";
+                })
+                .onErrorResume(e -> Mono.just(""));
+    }
 
-        if (contentRes != null && contentRes.getContent() != null && "base64".equals(contentRes.getEncoding())) {
-            try {
-                return new String(Base64.getMimeDecoder().decode(contentRes.getContent()));
-            } catch (Exception e) {
-                return null;
-            }
-        }
-        return null;
+    public String fetchFileContent(String username, String repoName, String path) {
+        String content = fetchFileContentMono(username, repoName, path).block();
+        return content == null || content.isEmpty() ? null : content;
     }
 
     public List<GitHubCommitResponse> fetchRecentCommits(String username, String repoName) {

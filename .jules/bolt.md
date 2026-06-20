@@ -26,3 +26,6 @@
 ## 2026-06-20 - Test for Direct WebClient Exception
 **Learning:** In Spring WebFlux, exceptions thrown directly by `WebClient.post()` (before the reactive chain is built) might not be covered by mocked Mono error returns. Adding tests for direct `RuntimeException` exceptions helps cover code paths for the outer try-catch block.
 **Action:** When testing WebClient exception handling, ensure to simulate both reactive `Mono.error()` stream errors and direct method exceptions.
+## 2026-06-20 - Optimize GitHub API Calls in repoDeepDive
+**Learning:** Sequential blocking network calls in Spring WebFlux controllers can introduce O(n) latency bottlenecks, specifically when making N+1 API calls sequentially. Using `Flux.fromIterable().flatMapSequential()` to fetch configuration files concurrently while preserving order dramatically improves performance.
+**Action:** When performing multiple parallelizable I/O operations (like API requests) in Spring Boot, use reactive tools like `Flux.flatMapSequential()` instead of sequential `for` loops and `.block()`.

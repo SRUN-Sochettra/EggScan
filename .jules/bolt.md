@@ -17,3 +17,6 @@
 ## 2024-05-19 - Extracted API Error Handling
 **Learning:** DRY (Don't Repeat Yourself) principle applies heavily to API interactions; extracting common response handling, like standard error checking and JSON parsing, into utility functions improves both readability and maintainability without changing behavior.
 **Action:** Look for repeated `if (!res.ok)` boilerplate in network calls during code reviews and extract it to a shared handler.
+## 2026-06-20 - Battle Scan Concurrency Optimization
+**Learning:** Sequential external API calls (e.g., executing two separate scans) in Spring Boot can cause significant latency duplication.
+**Action:** Use `CompletableFuture.supplyAsync()` paired with a custom `ThreadPoolTaskExecutor` to execute independent blocking/I/O-bound operations concurrently. Always use `CompletableFuture.allOf()` to safely gather the results.

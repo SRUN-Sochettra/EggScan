@@ -10,10 +10,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,6 +43,9 @@ public class ScanServiceTest {
 
     @Mock
     private ObjectMapper objectMapper;
+
+    @Spy
+    private Executor scanExecutor = Executors.newSingleThreadExecutor();
 
     @InjectMocks
     private ScanService scanService;

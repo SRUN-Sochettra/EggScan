@@ -28,6 +28,7 @@ import com.eggscan.model.GitHubCommitResponse;
 import java.util.HashMap;
 
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 
 @Service
 @Slf4j
@@ -219,11 +220,21 @@ public class ScanService {
         List<String> filesToLookFor = List.of("package.json", "pom.xml", "docker-compose.yml", "requirements.txt", "build.gradle", "go.mod");
 
         if (tree != null && tree.getTree() != null) {
-            for (GitHubTreeItem item : tree.getTree()) {
-                if (filesToLookFor.contains(item.getPath())) {
-                    String content = gitHubService.fetchFileContent(username, repoName, item.getPath());
-                    if (content != null) {
-                        configFiles.put(item.getPath(), content);
+            List<String> matchingFiles = tree.getTree().stream()
+                    .map(GitHubTreeItem::getPath)
+                    .filter(filesToLookFor::contains)
+                    .toList();
+
+            List<Map.Entry<String, String>> results = Flux.fromIterable(matchingFiles)
+                    .flatMapSequential(path -> gitHubService.fetchFileContentMono(username, repoName, path)
+                            .map(content -> Map.entry(path, content)))
+                    .collectList()
+                    .block();
+
+            if (results != null) {
+                for (Map.Entry<String, String> entry : results) {
+                    if (!entry.getValue().isEmpty()) {
+                        configFiles.put(entry.getKey(), entry.getValue());
                     }
                 }
             }

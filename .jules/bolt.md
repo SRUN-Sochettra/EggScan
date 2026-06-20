@@ -20,3 +20,6 @@
 ## 2026-06-20 - Battle Scan Concurrency Optimization
 **Learning:** Sequential external API calls (e.g., executing two separate scans) in Spring Boot can cause significant latency duplication.
 **Action:** Use `CompletableFuture.supplyAsync()` paired with a custom `ThreadPoolTaskExecutor` to execute independent blocking/I/O-bound operations concurrently. Always use `CompletableFuture.allOf()` to safely gather the results.
+## 2026-06-20 - Optimize GitHub API Calls with Flux flatMapSequential
+**Learning:** In Spring WebFlux, when needing to iterate over a list of items and perform asynchronous blocking calls (like fetching files via `WebClient`), using a basic sequential loop blocks execution per item, creating an N+1 latency problem.
+**Action:** Always replace sequential blocking I/O loops with `Flux.fromIterable(items).flatMapSequential(...)` when using WebFlux. This executes requests concurrently reducing the overall latency to O(1) in ideal conditions while preserving the response order. Remember to return reactive types (`Mono`) up the chain where possible instead of using `.block()`.

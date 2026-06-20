@@ -10,3 +10,6 @@
 ## 2024-05-14 - Remove unused code (IconEgg)
 **Learning:** Found an unused React component `IconEgg` in `frontend/src/components/Icons.jsx`.
 **Action:** Removed dead code to reduce complexity and improve maintainability of the codebase, ensuring no unused imports or exports are left behind.
+## 2026-06-19 - Simulating exceptions in WebClient tests
+**Learning:** To accurately test fallback behavior when a `WebClient` call fails (specifically during the `.block()` phase), the test should simulate the failure by returning an error signal from the mock chain (e.g., using `mockWebClientResponse(Mono.error(new RuntimeException(...)))`). This approach accurately mimics network or parsing errors that manifest during sequence evaluation, whereas using `.thenThrow(...)` on the initial `.post()` method incorrectly simulates a failure during request construction.
+**Action:** When mocking WebFlux `WebClient` calls that complete via `.block()`, I will use `Mono.error(...)` in the mock setup to verify exception handling logic rather than throwing an exception during the request-building phase.

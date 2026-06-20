@@ -29,3 +29,6 @@
 ## 2026-06-20 - Optimize GitHub API Calls in repoDeepDive
 **Learning:** Sequential blocking network calls in Spring WebFlux controllers can introduce O(n) latency bottlenecks, specifically when making N+1 API calls sequentially. Using `Flux.fromIterable().flatMapSequential()` to fetch configuration files concurrently while preserving order dramatically improves performance.
 **Action:** When performing multiple parallelizable I/O operations (like API requests) in Spring Boot, use reactive tools like `Flux.flatMapSequential()` instead of sequential `for` loops and `.block()`.
+## 2026-06-20 - Testing WebClientResponseException in WebFlux
+**Learning:** Testing `WebClient` error paths requires mocking the specific exceptions thrown by the framework, such as `WebClientResponseException`, which is commonly thrown during `retrieve().bodyToMono().block()` when HTTP errors occur.
+**Action:** Include a dedicated test for `WebClientResponseException` alongside generic `RuntimeException` tests when verifying `WebClient` exception fallback logic.

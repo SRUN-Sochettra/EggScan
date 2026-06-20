@@ -149,4 +149,18 @@ public class GitHubGraphQLServiceTest {
         assertEquals(List.of(), stats.getPinnedRepos());
         assertFalse(stats.isHasPinnedRepos());
     }
+
+    @Test
+    void fetchStats_WebClientResponseException_ReturnsEmptyStats() {
+        mockWebClientResponse(Mono.error(new org.springframework.web.reactive.function.client.WebClientResponseException(500, "Server Error", null, null, null)));
+
+        ContributionStats stats = gitHubGraphQLService.fetchStats("testuser");
+
+        assertNotNull(stats);
+        assertEquals(0, stats.getTotalContributionsLastYear());
+        assertEquals(0, stats.getTotalIssues());
+        assertEquals(0, stats.getTotalPullRequests());
+        assertEquals(List.of(), stats.getPinnedRepos());
+        assertFalse(stats.isHasPinnedRepos());
+    }
 }

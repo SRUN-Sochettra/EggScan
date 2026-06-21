@@ -1,100 +1,68 @@
 package com.eggscan.service;
 
 import com.eggscan.dto.AIInsights;
-
+import com.eggscan.model.ContributionStats;
+import com.eggscan.model.ScanResult;
+import com.eggscan.dto.CommitShameResponse;
+import com.eggscan.dto.ReadmeRaterResponse;
+import com.eggscan.dto.StackRoastResponse;
 import com.eggscan.dto.RepoDeepDiveResponse;
+import com.eggscan.model.PinnedRepo;
 import com.eggscan.model.GitHubTreeResponse;
 import com.eggscan.model.GitHubCommitResponse;
-
-import com.eggscan.model.ContributionStats;
-import com.eggscan.model.PinnedRepo;
-import com.eggscan.model.ScanResult;
-import com.fasterxml.jackson.databind.JsonNode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Service
+@Slf4j
 public class AIAnalyzerService {
 
-    private static final Pattern EMOJI_PATTERN = Pattern.compile(
-            "[\\p{So}\\p{Cn}]|" +
-            "[\\x{1F000}-\\x{1FFFF}]|" +
-            "[\\x{2600}-\\x{27BF}]|" +
-            "[\\x{FE00}-\\x{FE0F}]|" +
-            "[\\x{200D}]"
-    );
-
-    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
-
     private final GroqService groq;
+    private static final Pattern EMOJI_PATTERN = Pattern.compile("[\\x{1F600}-\\x{1F64F}\\x{1F300}-\\x{1F5FF}\\x{1F680}-\\x{1F6FF}\\x{1F700}-\\x{1F77F}\\x{1F780}-\\x{1F7FF}\\x{1F800}-\\x{1F8FF}\\x{1F900}-\\x{1F9FF}\\x{1FA00}-\\x{1FA6F}\\x{1FA70}-\\x{1FAFF}\\x{2600}-\\x{26FF}\\x{2700}-\\x{27BF}]");
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
     public AIAnalyzerService(GroqService groq) {
         this.groq = groq;
     }
 
-    private String getSystemPrompt(String mode) {
-        String persona;
-        if (mode == null) mode = "honest";
-        switch (mode.toLowerCase()) {
-            case "roast":
-                persona = "You are a ruthless, cynical senior engineer who hates everyone's code. You speak directly and roast the user aggressively. You find every little flaw and mock it mercilessly. You don't hold back.";
-                break;
-            case "hype":
-                persona = "You are a hyper-enthusiastic startup founder who thinks everything is revolutionary! You use lots of exclamation points and hype up even the most basic skills. You speak with relentless optimism and energy.";
-                break;
-            case "pirate":
-                persona = "You are a salty pirate captain sailing the high seas of open source. You speak entirely in pirate slang, talking about bounties, doubloons, mutiny, and ships (repos).";
-                break;
-            case "professional":
-                persona = "You are an extremely polite, formal, and encouraging HR professional. You give gentle, corporate-friendly feedback and always find a polite way to suggest improvements.";
-                break;
-            case "honest":
-            default:
-                persona = "You are a brutally honest senior tech recruiter who reviews GitHub profiles for a living. You speak directly, no fluff, no corporate language. You call out red flags but stay constructive.";
-                break;
-        }
-
-        return persona + """
-
-            You ALWAYS respond with valid JSON matching this exact shape:
-            {
-              "firstImpression": "2-3 sentences about what a recruiter sees in the first 15 seconds",
-              "skills": ["skill1", "skill2", "skill3", "skill4", "skill5"],
-              "improvements": ["specific actionable fix 1", "fix 2", "fix 3", "fix 4"],
-              "vibe": "one short phrase describing their developer personality",
-              "eggScore": 0-100 integer,
-              "eggVerdict": "exactly one of: Golden Egg, Hard Boiled, Fresh Egg, Cracked, Scrambled"
-            }
-            
-            IMPORTANT RULES:
-            - DO NOT use emojis anywhere in your response. No emojis in vibe, skills, improvements, or any field.
-            - Use plain text only. The frontend handles all visual styling.
-            - Vibe examples (good): "Quiet builder", "Weekend tinkerer", "Architecture-first thinker", "Ships fast, documents later"
-            - Vibe examples (bad): "Quiet builder 🛠️", "Weekend tinkerer 🌙"
-            
-            Verdict thresholds:
-            - 80-100: Golden Egg (recruiter ready)
-            - 65-79:  Hard Boiled (solid profile)
-            - 45-64:  Fresh Egg (just getting started)
-            - 25-44:  Cracked (needs work)
-            - 0-24:   Scrambled (do not apply yet)
-            
-            Skills must be REAL technologies/languages/frameworks visible in their repos — never invent skills.
-            Improvements must be specific and actionable, not generic advice.
-            """;
-    }
-
     public AIInsights analyze(ScanResult scan, ContributionStats stats, Map<String, String> readmes, String mode) {
+        String basePrompt = "You are an AI scanning a developer's GitHub profile. " +
+                "You must analyze their stats, repositories, and README excerpts. " +
+                "Determine their EggScore (0-100) and an EggVerdict ('Golden Egg', 'Hard Boiled', 'Fresh Egg', 'Cracked', 'Scrambled'). " +
+                "Provide a brutally honest recruiter impression, actual technical skills demonstrated, and harsh areas for improvement. " +
+                "Provide a single 'vibe' word.";
+
+        String tone = switch (mode.toLowerCase()) {
+            case "professional" -> "Be polite, constructive, and highly professional.";
+            case "roast" -> "Be absolutely brutal. Roast them. Make them question their career choices.";
+            case "hype" -> "Be an over-enthusiastic tech startup founder. Everything is a paradigm shift.";
+            case "pirate" -> "Talk like a salty sea captain reviewing a deckhand's work.";
+            default -> "Be a tired, cynical, brutally honest tech recruiter.";
+        };
+
+        String schema = "Respond with valid JSON: { \"firstImpression\": \"\", \"skills\": [], \"improvements\": [], \"vibe\": \"\", \"eggScore\": 0, \"eggVerdict\": \"\" }";
+
+        String prompt = basePrompt + " " + tone + " " + schema;
         String context = buildContext(scan, stats, readmes);
-        JsonNode json = groq.chatJson(getSystemPrompt(mode), context);
+
+        com.fasterxml.jackson.databind.JsonNode json = groq.chatJson(prompt, context);
 
         AIInsights out = new AIInsights();
-        out.setFirstImpression(stripEmoji(json.path("firstImpression").asText("")));
-        out.setVibe(stripEmoji(json.path("vibe").asText("")));
-        out.setEggScore(clamp(json.path("eggScore").asInt(0)));
-        out.setEggVerdict(json.path("eggVerdict").asText("Fresh Egg"));
+        out.setFirstImpression(stripEmoji(json.path("firstImpression").asText()));
+        out.setVibe(stripEmoji(json.path("vibe").asText()));
+        out.setEggScore(clamp(json.path("eggScore").asInt(50)));
+
+        String rawVerdict = stripEmoji(json.path("eggVerdict").asText());
+        if (!List.of("Golden Egg", "Hard Boiled", "Fresh Egg", "Cracked", "Scrambled").contains(rawVerdict)) {
+            rawVerdict = "Fresh Egg";
+        }
+        out.setEggVerdict(rawVerdict);
 
         List<String> skills = new ArrayList<>();
         json.path("skills").forEach(n -> skills.add(stripEmoji(n.asText())));
@@ -287,5 +255,96 @@ public class AIAnalyzerService {
         response.setActionableImprovements(improvements);
 
         return response;
+    }
+
+    private String getTonePrompt(String tone) {
+        return switch (tone.toLowerCase()) {
+            case "gordon" -> "You are Gordon Ramsay. You are extremely angry, aggressive, and disappointed. Use his signature style and catchphrases.";
+            case "parent" -> "You are a disappointed parent. You aren't mad, you're just disappointed. Use passive-aggressive guilt trips.";
+            case "techbro" -> "You are an insufferable Silicon Valley tech bro. Use excessive buzzwords, talk about synergy, disruption, and 10x engineering.";
+            case "honest" -> "You are brutally honest. Do not hold back, but be professional about your criticism.";
+            default -> "You are a witty, slightly sarcastic code reviewer.";
+        };
+    }
+
+    public CommitShameResponse shameCommits(List<String> commits, String tone) {
+        StringBuilder context = new StringBuilder();
+        context.append("--- RECENT COMMITS ---\n");
+        for (int i = 0; i < commits.size(); i++) {
+            context.append(i+1).append(". ").append(commits.get(i).replace("\n", " ")).append("\n");
+        }
+
+        String prompt = getTonePrompt(tone) + "\n\n" +
+            "Analyze these recent git commit messages.\n" +
+            "Respond with valid JSON matching exactly this shape:\n" +
+            "{\n" +
+            "  \"summary\": \"A short 1-sentence summary of their commit habits.\",\n" +
+            "  \"lazinessScore\": Integer from 0 to 100 (100 = completely lazy/useless messages),\n" +
+            "  \"worstCommits\": [\"The 3 most offending/useless commit messages\"],\n" +
+            "  \"roast\": \"A paragraph roasting them based on their commit messages.\"\n" +
+            "}";
+
+        com.fasterxml.jackson.databind.JsonNode json = groq.chatJson(prompt, context.toString());
+        CommitShameResponse res = new CommitShameResponse();
+        res.setSummary(json.path("summary").asText(""));
+        res.setLazinessScore(json.path("lazinessScore").asInt(0));
+        List<String> worst = new ArrayList<>();
+        json.path("worstCommits").forEach(n -> worst.add(n.asText()));
+        res.setWorstCommits(worst);
+        res.setRoast(json.path("roast").asText(""));
+        return res;
+    }
+
+    public ReadmeRaterResponse rateReadmes(Map<String, String> readmes, String tone) {
+        StringBuilder context = new StringBuilder();
+        appendReadmeSnippets(context, readmes);
+
+        String prompt = getTonePrompt(tone) + "\n\n" +
+            "Analyze these README excerpts from a developer's repositories.\n" +
+            "Respond with valid JSON matching exactly this shape:\n" +
+            "{\n" +
+            "  \"summary\": \"A short 1-sentence summary of their documentation skills.\",\n" +
+            "  \"uselessnessScore\": Integer from 0 to 100 (100 = completely useless/empty readmes),\n" +
+            "  \"nitpicks\": [\"2 or 3 specific things they did wrong\"],\n" +
+            "  \"roast\": \"A paragraph roasting their lack of documentation.\"\n" +
+            "}";
+
+        com.fasterxml.jackson.databind.JsonNode json = groq.chatJson(prompt, context.toString());
+        ReadmeRaterResponse res = new ReadmeRaterResponse();
+        res.setSummary(json.path("summary").asText(""));
+        res.setUselessnessScore(json.path("uselessnessScore").asInt(0));
+        List<String> nitpicks = new ArrayList<>();
+        json.path("nitpicks").forEach(n -> nitpicks.add(n.asText()));
+        res.setNitpicks(nitpicks);
+        res.setRoast(json.path("roast").asText(""));
+        return res;
+    }
+
+    public StackRoastResponse roastStack(Map<String, Integer> languages, Map<String, String> configs, String tone) {
+        StringBuilder context = new StringBuilder();
+        context.append("--- LANGUAGES (Repo counts) ---\n");
+        languages.forEach((k,v) -> context.append(k).append(": ").append(v).append("\n"));
+        context.append("\n--- CONFIG FILES ---\n");
+        for (Map.Entry<String, String> entry : configs.entrySet()) {
+            context.append("[").append(entry.getKey()).append("]\n");
+            String content = entry.getValue();
+            context.append(content.length() > 500 ? content.substring(0, 500) + "..." : content).append("\n\n");
+        }
+
+        String prompt = getTonePrompt(tone) + "\n\n" +
+            "Analyze this developer's programming languages and configuration files.\n" +
+            "Respond with valid JSON matching exactly this shape:\n" +
+            "{\n" +
+            "  \"topLanguagesRoast\": \"A paragraph roasting their choice of top programming languages.\",\n" +
+            "  \"configDeepDiveRoast\": \"A paragraph roasting their dependencies and tech stack found in their config files.\",\n" +
+            "  \"overallVerdict\": \"A 1-sentence final judgment of their stack.\"\n" +
+            "}";
+
+        com.fasterxml.jackson.databind.JsonNode json = groq.chatJson(prompt, context.toString());
+        StackRoastResponse res = new StackRoastResponse();
+        res.setTopLanguagesRoast(json.path("topLanguagesRoast").asText(""));
+        res.setConfigDeepDiveRoast(json.path("configDeepDiveRoast").asText(""));
+        res.setOverallVerdict(json.path("overallVerdict").asText(""));
+        return res;
     }
 }

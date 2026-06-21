@@ -35,3 +35,6 @@
 ## 2026-06-21 - [Optimize Sequential External API Calls]
 **Learning:** External API calls executed sequentially within a single method execution path, particularly those relying on independent data, cause cumulative latency delays affecting overall response time.
 **Action:** Identify independent sequential blocking tasks and execute them concurrently. Specifically in Spring Boot with non-reactive components, wrap them in `CompletableFuture.supplyAsync()` utilizing a dedicated `Executor`, and use `CompletableFuture.allOf().join()` before harvesting results.
+## 2026-06-21 - [Optimize Sequential External API Calls]
+**Learning:** Adding new UI features that consume multiple separate AI functions requires careful orchestration of API calls on both the frontend and backend to avoid sequential blocking.
+**Action:** Always ensure that new API routes are created efficiently and that heavy AI tasks (like processing hundreds of commits) are either paginated, sampled intelligently (e.g. max 30 commits), or cached to maintain responsiveness without overwhelming the user or external rate limits.

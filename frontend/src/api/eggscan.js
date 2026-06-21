@@ -35,3 +35,19 @@ export async function deepDiveRepo(username, repoName, defaultBranch = 'main') {
   const res = await fetch(`${BASE}/api/scan/${encodeURIComponent(username)}/repo/${encodeURIComponent(repoName)}?defaultBranch=${encodeURIComponent(defaultBranch)}`)
   return handleResponse(res, 'Repo deep dive failed')
 }
+
+export async function shameCommitsApi(username, repo, tone = 'honest') {
+  const repoParam = repo ? `&repo=${encodeURIComponent(repo)}` : '';
+  const res = await fetch(`${BASE}/api/shame/commits/${encodeURIComponent(username)}?tone=${encodeURIComponent(tone)}${repoParam}`)
+  return handleResponse(res, 'Commit shame failed')
+}
+
+export async function rateReadmeApi(username, tone = 'honest') {
+  const res = await fetch(`${BASE}/api/shame/readme/${encodeURIComponent(username)}?tone=${encodeURIComponent(tone)}`)
+  return handleResponse(res, 'README rater failed')
+}
+
+export async function roastStackApi(username, tone = 'honest') {
+  const res = await fetch(`${BASE}/api/shame/stack/${encodeURIComponent(username)}?tone=${encodeURIComponent(tone)}`)
+  return handleResponse(res, 'Stack roast failed')
+}

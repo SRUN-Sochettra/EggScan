@@ -45,7 +45,7 @@ public class ScanServiceTest {
     private ObjectMapper objectMapper;
 
     @Spy
-    private Executor scanExecutor = Executors.newSingleThreadExecutor();
+    private Executor scanExecutor = Executors.newFixedThreadPool(2);
 
     @InjectMocks
     private ScanService scanService;
@@ -133,5 +133,54 @@ public class ScanServiceTest {
         assertEquals(90, result.get(0).getEggScore());
         assertEquals("user2", result.get(1).getUsername());
         assertEquals(85, result.get(1).getEggScore());
+    }
+
+    @Test
+    void testPerformNewScan_Performance() throws Exception {
+        // Arrange
+        com.eggscan.model.GitHubProfile profile = new com.eggscan.model.GitHubProfile();
+        profile.setLogin("testuser");
+        com.eggscan.model.ScanResult mockData = com.eggscan.model.ScanResult.builder()
+                .profile(profile)
+                .repos(java.util.List.of())
+                .build();
+
+        com.eggscan.model.ContributionStats mockStats = com.eggscan.model.ContributionStats.builder().build();
+
+        com.eggscan.dto.AIInsights mockAi = new com.eggscan.dto.AIInsights();
+        mockAi.setEggVerdict("Golden Egg");
+        mockAi.setEggScore(100);
+        mockAi.setVibe("Awesome");
+
+        // Introduce artificial 200ms delay to both methods
+        when(gitHubService.scanUser("testuser")).thenAnswer(invocation -> {
+            Thread.sleep(200);
+            return mockData;
+        });
+
+        when(graphQLService.fetchStats("testuser")).thenAnswer(invocation -> {
+            Thread.sleep(200);
+            return mockStats;
+        });
+
+        when(readmeService.fetchTopReadmes(eq("testuser"), any(), eq(5))).thenReturn(java.util.Map.of());
+        when(readmeService.countReposWithReadme(any())).thenReturn(0);
+        when(analyzer.analyze(any(), any(), any(), any())).thenReturn(mockAi);
+        when(scanRecordRepository.findFirstByUsernameOrderByScannedAtDesc("testuser")).thenReturn(Optional.empty());
+
+        // Act
+        long startTime = System.currentTimeMillis();
+        ScanResponse result = scanService.scan("testuser", "honest");
+        long endTime = System.currentTimeMillis();
+        long duration = endTime - startTime;
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("testuser", result.getUsername());
+        System.out.println("Execution time for scan(): " + duration + "ms");
+
+        // This test only measures and prints the time.
+        // Before optimization, it will be around 400ms.
+        // After optimization, it should be around 200ms.
     }
 }

@@ -118,4 +118,48 @@ public class ScanController {
         }
     }
 
+    @GetMapping("/shame/commits/{username}")
+    public ResponseEntity<?> shameCommits(@PathVariable String username, @RequestParam(required = false) String repo, @RequestParam(required = false, defaultValue = "honest") String tone) {
+        if (!isValidUsername(username)) {
+             return ResponseEntity.badRequest().body(Map.of("error", "Invalid username format"));
+        }
+        if (repo != null && !repo.isBlank() && !isValidRepoName(repo)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid repository name format"));
+        }
+        try {
+            return ResponseEntity.ok(scanService.shameCommits(username, repo, tone));
+        } catch (Exception e) {
+            log.error("Error occurred while shaming commits for username: {}", username, e);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "An error occurred while processing the request"));
+        }
+    }
+
+    @GetMapping("/shame/readme/{username}")
+    public ResponseEntity<?> rateReadmes(@PathVariable String username, @RequestParam(required = false, defaultValue = "honest") String tone) {
+        if (!isValidUsername(username)) {
+             return ResponseEntity.badRequest().body(Map.of("error", "Invalid username format"));
+        }
+        try {
+            return ResponseEntity.ok(scanService.rateReadmes(username, tone));
+        } catch (Exception e) {
+            log.error("Error occurred while rating readmes for username: {}", username, e);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "An error occurred while processing the request"));
+        }
+    }
+
+    @GetMapping("/shame/stack/{username}")
+    public ResponseEntity<?> roastStack(@PathVariable String username, @RequestParam(required = false, defaultValue = "honest") String tone) {
+        if (!isValidUsername(username)) {
+             return ResponseEntity.badRequest().body(Map.of("error", "Invalid username format"));
+        }
+        try {
+            return ResponseEntity.ok(scanService.roastStack(username, tone));
+        } catch (Exception e) {
+            log.error("Error occurred while roasting stack for username: {}", username, e);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "An error occurred while processing the request"));
+        }
+    }
 }

@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import com.eggscan.model.GitHubTreeResponse;
 import com.eggscan.model.GitHubContentResponse;
 import com.eggscan.model.GitHubCommitResponse;
+import com.eggscan.model.GitHubEventResponse;
 import java.util.Base64;
 
 
@@ -134,4 +135,13 @@ public class GitHubService {
         return commits == null ? List.of() : Arrays.asList(commits);
     }
 
+    public List<GitHubEventResponse> fetchUserEvents(String username) {
+        GitHubEventResponse[] events = client.get()
+                .uri("/users/{u}/events?per_page=100", username)
+                .retrieve()
+                .bodyToMono(GitHubEventResponse[].class)
+                .onErrorResume(e -> Mono.just(new GitHubEventResponse[0]))
+                .block();
+        return events == null ? List.of() : Arrays.asList(events);
+    }
 }

@@ -1,33 +1,37 @@
 package com.eggscan.service;
 
-import com.eggscan.dto.AIInsights;
 import com.eggscan.dto.ScanResponse;
-import com.eggscan.model.ContributionStats;
-import com.eggscan.model.ScanRecord;
 import com.eggscan.model.ScanResult;
+import com.eggscan.model.ScanRecord;
 import com.eggscan.repository.ScanRecordRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.eggscan.model.ContributionStats;
+import com.eggscan.dto.AIInsights;
 import com.eggscan.dto.BattleResponse;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-
-import org.springframework.beans.factory.annotation.Qualifier;
 import com.eggscan.dto.RepoDeepDiveResponse;
+import com.eggscan.dto.CommitShameResponse;
+import com.eggscan.dto.ReadmeRaterResponse;
+import com.eggscan.dto.StackRoastResponse;
 import com.eggscan.model.GitHubTreeResponse;
 import com.eggscan.model.GitHubTreeItem;
 import com.eggscan.model.GitHubCommitResponse;
+import com.eggscan.model.GitHubEventResponse;
 import java.util.HashMap;
+import java.util.ArrayList;
+
+import org.springframework.data.domain.PageRequest;
+import java.util.stream.Collectors;
+import java.util.UUID;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 @Service
@@ -248,4 +252,83 @@ public class ScanService {
         return analyzer.analyzeRepository(username, repoName, readme, tree, configFiles, commits);
     }
 
+    public CommitShameResponse shameCommits(String username, String repo, String tone) {
+        log.info("Shaming commits for username: {}, repo: {}, tone: {}", username, repo, tone);
+        List<String> commitMessages = new ArrayList<>();
+
+        if (repo != null && !repo.isBlank()) {
+            List<GitHubCommitResponse> commits = gitHubService.fetchRecentCommits(username, repo);
+            commits.forEach(c -> commitMessages.add(c.getCommit().getMessage()));
+        } else {
+            List<GitHubEventResponse> events = gitHubService.fetchUserEvents(username);
+            for (GitHubEventResponse event : events) {
+                if ("PushEvent".equals(event.getType()) && event.getPayload() != null && event.getPayload().getCommits() != null) {
+                    for (GitHubEventResponse.Commit commit : event.getPayload().getCommits()) {
+                        commitMessages.add(commit.getMessage());
+                        if (commitMessages.size() >= 30) break;
+                    }
+                }
+                if (commitMessages.size() >= 30) break;
+            }
+        }
+
+        if (commitMessages.isEmpty()) {
+            commitMessages.add("No recent commits found.");
+        }
+
+        return analyzer.shameCommits(commitMessages, tone);
+    }
+
+    public ReadmeRaterResponse rateReadmes(String username, String tone) {
+        log.info("Rating readmes for username: {}, tone: {}", username, tone);
+        ScanResult data = gitHubService.scanUser(username);
+
+        Map<String, String> readmes = readmeService.fetchTopReadmes(username, data.getRepos(), 3);
+
+        String profileReadme = gitHubService.fetchFileContent(username, username, "README.md");
+        if (profileReadme == null) {
+            profileReadme = gitHubService.fetchFileContent(username, username, "readme.md");
+        }
+        if (profileReadme != null) {
+            readmes.put(username + "/" + username + " (Profile)", profileReadme);
+        }
+
+        return analyzer.rateReadmes(readmes, tone);
+    }
+
+    public StackRoastResponse roastStack(String username, String tone) {
+        log.info("Roasting stack for username: {}, tone: {}", username, tone);
+        ScanResult data = gitHubService.scanUser(username);
+
+        Map<String, String> configFiles = new HashMap<>();
+        List<String> filesToLookFor = List.of("package.json", "pom.xml", "docker-compose.yml", "requirements.txt", "build.gradle", "go.mod");
+
+        // Fetch configs for top 2 repos to keep it fast
+        data.getRepos().stream().limit(2).forEach(r -> {
+            String repoName = r.getName();
+            GitHubTreeResponse tree = gitHubService.fetchRepoTree(username, repoName, r.getDefault_branch() != null ? r.getDefault_branch() : "main");
+            if (tree != null && tree.getTree() != null) {
+                List<String> matchingFiles = tree.getTree().stream()
+                        .map(GitHubTreeItem::getPath)
+                        .filter(filesToLookFor::contains)
+                        .toList();
+
+                List<Map.Entry<String, String>> results = Flux.fromIterable(matchingFiles)
+                        .flatMapSequential(path -> gitHubService.fetchFileContentMono(username, repoName, path)
+                                .map(content -> Map.entry(repoName + "/" + path, content)))
+                        .collectList()
+                        .block();
+
+                if (results != null) {
+                    for (Map.Entry<String, String> entry : results) {
+                        if (!entry.getValue().isEmpty()) {
+                            configFiles.put(entry.getKey(), entry.getValue());
+                        }
+                    }
+                }
+            }
+        });
+
+        return analyzer.roastStack(data.getLanguageBreakdown(), configFiles, tone);
+    }
 }

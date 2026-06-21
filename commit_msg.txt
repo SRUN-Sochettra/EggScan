@@ -1,12 +1,8 @@
-⚡ Optimize sequential API scans with CompletableFuture
+feat: add CommitShame, READMErater, and StackRoast pages
 
-💡 What:
-Wrapped `gitHubService.scanUser(username)` and `graphQLService.fetchStats(username)` calls inside `ScanService.performNewScan` in `CompletableFuture.supplyAsync()` using the existing `scanExecutor`. Joined them to execute concurrently instead of sequentially. Added a performance benchmark test in `ScanServiceTest`.
-
-🎯 Why:
-The previous implementation fetched data from GitHub's REST and GraphQL APIs sequentially. Since these are independent network calls, running them sequentially doubles the latency bound to API responses, unnecessarily delaying the completion of the `scan` method, which is heavily used including in battles.
-
-📊 Measured Improvement:
-- Baseline (Sequential mock delay of 200ms per call): ~430ms
-- Optimized (Concurrent mock delay of 200ms per call): ~230ms
-- This is roughly a 45-50% reduction in latency for this specific bottleneck when external calls take equal time. Execution time is now bound by the longest individual API call rather than the sum of all API calls.
+- Added React Router for navigation with a new top Navbar.
+- Created CommitShame, ReadmeRater, and StackRoast frontend pages to display AI roasting capabilities.
+- Added API functions in frontend `eggscan.js` to communicate with the backend.
+- Created `GitHubEventResponse` and DTOs (`CommitShameResponse`, `ReadmeRaterResponse`, `StackRoastResponse`) in the backend.
+- Implemented corresponding logic in `AIAnalyzerService`, fetching data via `GitHubService`, and handling requests in `ScanController`.
+- Added multiple tones (e.g., Gordon Ramsay, Tech Bro) for humorous AI responses.

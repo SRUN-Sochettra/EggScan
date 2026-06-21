@@ -21,4 +21,5 @@ public class GitHubRepo {
     private String created_at;
     private String html_url;
     private Integer size;
+    private String default_branch;
 }

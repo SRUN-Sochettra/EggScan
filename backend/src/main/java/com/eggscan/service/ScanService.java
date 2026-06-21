@@ -118,8 +118,13 @@ public class ScanService {
     }
 
     private ScanResponse performNewScan(String username, String mode) {
-        ScanResult data = gitHubService.scanUser(username);
-        ContributionStats stats = graphQLService.fetchStats(username);
+        CompletableFuture<ScanResult> futureData = CompletableFuture.supplyAsync(() -> gitHubService.scanUser(username), scanExecutor);
+        CompletableFuture<ContributionStats> futureStats = CompletableFuture.supplyAsync(() -> graphQLService.fetchStats(username), scanExecutor);
+
+        CompletableFuture.allOf(futureData, futureStats).join();
+
+        ScanResult data = futureData.join();
+        ContributionStats stats = futureStats.join();
         Map<String, String> readmes = readmeService.fetchTopReadmes(username, data.getRepos(), 5);
         data.setReposWithReadme(readmeService.countReposWithReadme(readmes));
 

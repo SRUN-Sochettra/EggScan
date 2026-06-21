@@ -32,3 +32,6 @@
 ## 2026-06-20 - Testing WebClientResponseException in WebFlux
 **Learning:** Testing `WebClient` error paths requires mocking the specific exceptions thrown by the framework, such as `WebClientResponseException`, which is commonly thrown during `retrieve().bodyToMono().block()` when HTTP errors occur.
 **Action:** Include a dedicated test for `WebClientResponseException` alongside generic `RuntimeException` tests when verifying `WebClient` exception fallback logic.
+## 2026-06-21 - [Optimize Sequential External API Calls]
+**Learning:** External API calls executed sequentially within a single method execution path, particularly those relying on independent data, cause cumulative latency delays affecting overall response time.
+**Action:** Identify independent sequential blocking tasks and execute them concurrently. Specifically in Spring Boot with non-reactive components, wrap them in `CompletableFuture.supplyAsync()` utilizing a dedicated `Executor`, and use `CompletableFuture.allOf().join()` before harvesting results.

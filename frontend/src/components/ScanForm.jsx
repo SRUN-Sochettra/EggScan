@@ -14,17 +14,18 @@ export default function ScanForm({ onScan, loading }) {
     <form onSubmit={submit} className="flex flex-col gap-3">
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-brown-300 font-bold text-lg pointer-events-none">
+          <label htmlFor="username-input" className="sr-only">GitHub username</label>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-brown-300 font-bold text-lg pointer-events-none" aria-hidden="true">
             @
           </span>
           <input
+            id="username-input"
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''))}
             maxLength={39}
             placeholder="your-github-username"
-            aria-label="GitHub username"
-            className="input-egg w-full"
+            className="input-egg w-full focus-visible:ring-2 focus-visible:ring-brown-500 outline-none"
             disabled={loading}
             autoFocus
           />
@@ -48,7 +49,7 @@ export default function ScanForm({ onScan, loading }) {
           value={mode}
           onChange={(e) => setMode(e.target.value)}
           disabled={loading}
-          className="bg-white/50 border border-brown-300 text-brown-700 text-sm rounded-lg focus:ring-brown-500 focus:border-brown-500 block p-2 outline-none cursor-pointer"
+          className="bg-white/50 border border-brown-300 text-brown-700 text-sm rounded-lg focus-visible:ring-2 focus-visible:ring-brown-500 focus:border-brown-500 block p-2 outline-none cursor-pointer"
         >
           <option value="honest">Honest Recruiter (Default)</option>
           <option value="professional">Professional & Polite</option>

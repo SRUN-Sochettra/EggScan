@@ -1,8 +1,7 @@
-feat: add CommitShame, READMErater, and StackRoast pages
+feat: complete brainstorming tasks across ux, perf, and security
 
-- Added React Router for navigation with a new top Navbar.
-- Created CommitShame, ReadmeRater, and StackRoast frontend pages to display AI roasting capabilities.
-- Added API functions in frontend `eggscan.js` to communicate with the backend.
-- Created `GitHubEventResponse` and DTOs (`CommitShameResponse`, `ReadmeRaterResponse`, `StackRoastResponse`) in the backend.
-- Implemented corresponding logic in `AIAnalyzerService`, fetching data via `GitHubService`, and handling requests in `ScanController`.
-- Added multiple tones (e.g., Gordon Ramsay, Tech Bro) for humorous AI responses.
+This PR consolidates multiple improvements identified during a brainstorming session:
+1. UX/Accessibility form focus states.
+2. Performance concurrency for the GitHub API using Mono.zip.
+3. Security exponential backoff for transient 5xx errors via ExchangeFilterFunction.
+4. Linus Torvalds Easter Egg and improved frontend loader.

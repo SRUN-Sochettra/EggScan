@@ -45,6 +45,19 @@ public class ScanController {
         if (!isValidUsername(username)) {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid username format"));
         }
+
+        if ("torvalds".equalsIgnoreCase(username)) {
+            ScanResponse easterEgg = ScanResponse.builder()
+                    .username("torvalds")
+                    .eggVerdict("Golden Egg")
+                    .eggScore(100)
+                    .firstImpression("Wait, are you actually Linus? *bows down*")
+                    .vibe("Literal God Tier. Creator of Git and Linux.")
+                    .skills(java.util.List.of("C", "Kernel", "Git", "Yelling at developers on mailing lists"))
+                    .build();
+            return ResponseEntity.ok(easterEgg);
+        }
+
         try {
             ScanResponse response = scanService.scan(username, mode);
             return ResponseEntity.ok(response);

@@ -22,5 +22,7 @@ public class ScanResponse {
     private List<String> improvements;
     private String vibe;
     private ScanResult rawData;
+    private String predictedJobTitle;
+    private String predictedSalary;
     private com.eggscan.model.ContributionStats stats;
 }

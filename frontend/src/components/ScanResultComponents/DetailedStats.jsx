@@ -8,6 +8,18 @@ export default function DetailedStats({ data }) {
           Detailed Stats
         </h3>
       </div>
+      {data.predictedJobTitle && (
+        <div className="mb-5 p-4 bg-yellow-50 border border-yellow-200 rounded-lg shadow-sm">
+          <div className="mb-2">
+            <p className="text-xs uppercase tracking-wider text-brown-400 font-bold mb-1">Predicted Job Title</p>
+            <p className="font-display font-bold text-brown-800 text-lg">{data.predictedJobTitle}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-brown-400 font-bold mb-1">Estimated Salary</p>
+            <p className="text-brown-600 font-medium">{data.predictedSalary}</p>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-4">
         <StatBox label="Total Stars" value={data.rawData?.totalStars || 0} />
         <StatBox label="Commits (1y)" value={data.stats?.totalContributionsLastYear || 0} />

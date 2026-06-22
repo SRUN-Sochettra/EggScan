@@ -309,7 +309,8 @@ public class AIAnalyzerService {
             "  \"summary\": \"A short 1-sentence summary of their documentation skills.\",\n" +
             "  \"uselessnessScore\": Integer from 0 to 100 (100 = completely useless/empty readmes),\n" +
             "  \"nitpicks\": [\"2 or 3 specific things they did wrong\"],\n" +
-            "  \"roast\": \"A paragraph roasting their lack of documentation.\"\n" +
+            "  \"roast\": \"A paragraph roasting their lack of documentation.\",\n" +
+            "  \"generatedReadme\": \"A full, valid Markdown template for a much better, slightly passive-aggressive README that fixes their mistakes.\"\n" +
             "}";
 
         com.fasterxml.jackson.databind.JsonNode json = groq.chatJson(prompt, context.toString());
@@ -320,6 +321,7 @@ public class AIAnalyzerService {
         json.path("nitpicks").forEach(n -> nitpicks.add(n.asText()));
         res.setNitpicks(nitpicks);
         res.setRoast(json.path("roast").asText(""));
+        res.setGeneratedReadme(json.path("generatedReadme").asText(""));
         return res;
     }
 

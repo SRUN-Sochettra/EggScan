@@ -36,7 +36,7 @@ public class AIAnalyzerService {
                 "You must analyze their stats, repositories, and README excerpts. " +
                 "Determine their EggScore (0-100) and an EggVerdict ('Golden Egg', 'Hard Boiled', 'Fresh Egg', 'Cracked', 'Scrambled'). " +
                 "Provide a brutally honest recruiter impression, actual technical skills demonstrated, and harsh areas for improvement. " +
-                "Provide a single 'vibe' word. Also, invent a humorous 'predictedJobTitle' (e.g. 'Senior YAML Engineer') and a joke 'predictedSalary' (e.g. 'Paid in exposure') based on their profile data.";
+                "Provide a single 'vibe' word. Also, invent a humorous 'predictedJobTitle' (e.g. 'Senior YAML Engineer'), a joke 'predictedSalary' (e.g. 'Paid in exposure'), and a 'githubWrapped' sentence (e.g. 'You coded most on Sundays, do you have a life?') based on their profile data.";
 
         String tone = switch (mode.toLowerCase()) {
             case "professional" -> "Be polite, constructive, and highly professional.";
@@ -46,7 +46,7 @@ public class AIAnalyzerService {
             default -> "Be a tired, cynical, brutally honest tech recruiter.";
         };
 
-        String schema = "Respond with valid JSON: { \"firstImpression\": \"\", \"skills\": [], \"improvements\": [], \"vibe\": \"\", \"eggScore\": 0, \"eggVerdict\": \"\", \"predictedJobTitle\": \"\", \"predictedSalary\": \"\" }";
+        String schema = "Respond with valid JSON: { \"firstImpression\": \"\", \"skills\": [], \"improvements\": [], \"vibe\": \"\", \"eggScore\": 0, \"eggVerdict\": \"\", \"predictedJobTitle\": \"\", \"predictedSalary\": \"\", \"githubWrapped\": \"\" }";
 
         String prompt = basePrompt + " " + tone + " " + schema;
         String context = buildContext(scan, stats, readmes);
@@ -65,6 +65,7 @@ public class AIAnalyzerService {
         out.setEggVerdict(rawVerdict);
         out.setPredictedJobTitle(stripEmoji(json.path("predictedJobTitle").asText()));
         out.setPredictedSalary(stripEmoji(json.path("predictedSalary").asText()));
+        out.setGithubWrapped(stripEmoji(json.path("githubWrapped").asText()));
 
         List<String> skills = new ArrayList<>();
         json.path("skills").forEach(n -> skills.add(stripEmoji(n.asText())));

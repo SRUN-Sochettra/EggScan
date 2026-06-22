@@ -29,8 +29,13 @@ public class GitHubService {
     }
 
     public ScanResult scanUser(String username) {
-        GitHubProfile profile = fetchProfile(username);
-        List<GitHubRepo> repos = fetchRepos(username);
+        var tuple = Mono.zip(fetchProfileMono(username), fetchReposMono(username)).block();
+        if (tuple == null) {
+            throw new RuntimeException("Failed to fetch data for user: " + username);
+        }
+
+        GitHubProfile profile = tuple.getT1();
+        List<GitHubRepo> repos = tuple.getT2();
 
         // Filter out forks for skill analysis
         List<GitHubRepo> ownRepos = repos.stream()
@@ -75,22 +80,21 @@ public class GitHubService {
         return pushed.isAfter(Instant.now().minus(180, ChronoUnit.DAYS));
     }
 
-    private GitHubProfile fetchProfile(String username) {
+    private Mono<GitHubProfile> fetchProfileMono(String username) {
         return client.get()
                 .uri("/users/{u}", username)
                 .retrieve()
                 .bodyToMono(GitHubProfile.class)
-                .onErrorResume(e -> Mono.error(new RuntimeException("User not found: " + username)))
-                .block();
+                .onErrorResume(e -> Mono.error(new RuntimeException("User not found: " + username)));
     }
 
-    private List<GitHubRepo> fetchRepos(String username) {
-        GitHubRepo[] repos = client.get()
+    private Mono<List<GitHubRepo>> fetchReposMono(String username) {
+        return client.get()
                 .uri("/users/{u}/repos?per_page=100&sort=updated", username)
                 .retrieve()
                 .bodyToMono(GitHubRepo[].class)
-                .block();
-        return repos == null ? List.of() : Arrays.asList(repos);
+                .map(repos -> repos == null ? List.<GitHubRepo>of() : Arrays.asList(repos))
+                .onErrorResume(e -> Mono.just(List.of()));
     }
 
     public GitHubTreeResponse fetchRepoTree(String username, String repoName, String defaultBranch) {

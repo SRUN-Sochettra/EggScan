@@ -1,0 +1,4 @@
+
+## 2024-06-22 - Explicit Focus States and SR-Only Labels
+**Learning:** Custom inputs with absolute-positioned visual elements (like an adjacent `@` symbol) and native select elements often drop standard accessibility affordances. Using `aria-label` is good, but connecting an explicit, visually-hidden `<label className="sr-only">` provides stronger support for form autofill and screen reader context. Furthermore, interactive elements (buttons, inputs, selects) need explicitly defined `focus-visible` styles matching the theme (`focus-visible:ring-2 focus-visible:ring-brown-500 outline-none`) because browsers drop native focus rings when custom borders/backgrounds are applied.
+**Action:** When creating custom form layouts or using Tailwind utility classes that override native browser styles, always manually implement a `focus-visible` state and ensure standard `<label>` semantics are preserved using `sr-only` if visual design prohibits a visible label.

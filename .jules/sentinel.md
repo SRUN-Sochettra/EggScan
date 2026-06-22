@@ -18,3 +18,7 @@
 ## 2024-06-19 - Added timeout to WebClient configurations
 **Learning:** WebClient instances without explicit timeouts can cause resource exhaustion (e.g., thread pool starvation) and application unresponsiveness if external services (like the GitHub API) hang or respond too slowly. This is a common denial-of-service (DoS) vector.
 **Action:** Always configure `responseTimeout` on the underlying `HttpClient` when building `WebClient` instances to ensure requests fail fast and resources are released promptly.
+
+## 2024-06-22 - Resilience with Exponential Backoff
+**Learning:** Hard-failing immediately upon encountering an external API error (like a 502 Bad Gateway from GitHub or Groq) makes the application brittle to transient network conditions. However, blanket retries on all HTTP errors are dangerous (e.g., retrying a 401 Unauthorized or a 404 Not Found is useless and wastes resources/rate limits).
+**Action:** When configuring reactive `WebClient` instances for external APIs, always implement an intelligent retry mechanism. Use `ExchangeFilterFunction` combined with `Retry.backoff()` to apply exponential backoff, and strictly use `.filter()` to only trigger retries on transient errors like `5xx Server Error`.

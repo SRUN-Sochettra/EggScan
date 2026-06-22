@@ -41,3 +41,7 @@
 ## 2026-06-21 - Fix Render Deployment Compilation Error
 **Learning:** Adding explicit properties to models mapped from external APIs ensures Lombok generates required getters/setters instead of relying on implicit field mapping, which can cause `cannot find symbol` compilation errors during deployment when new fields are introduced or referenced in the service layer.
 **Action:** Always verify all fields explicitly accessed via getters in the service layer are explicitly defined in the data model.
+
+## 2024-06-22 - Optimizing Sequential API Calls with Mono.zip
+**Learning:** In Spring WebFlux applications, performing sequential `WebClient` requests using `.block()` multiple times in a single method (e.g., fetching a profile then fetching repos) creates an unnecessary latency bottleneck where Total Latency = Latency A + Latency B.
+**Action:** When making independent external API calls, return them as unblocked `Mono`s and combine them using `Mono.zip(monoA, monoB).block()`. This parallelizes the requests, reducing the Total Latency to max(Latency A, Latency B) without sacrificing readability. Furthermore, remember to update associated mock tests, as concurrent reactive chains change the expectation of how/when mock endpoints are requested compared to sequential blocking calls.

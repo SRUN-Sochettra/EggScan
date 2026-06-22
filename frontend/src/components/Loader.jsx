@@ -1,33 +1,10 @@
-import { useEffect, useState } from 'react'
-
-const STAGES = [
-  'Sneaking into your profile…',
-  'Counting your repos…',
-  'Reading your READMEs…',
-  'Asking the AI for the truth…',
-  'Almost cracked…',
-]
-
 export default function Loader() {
-  const [i, setI] = useState(0)
-  useEffect(() => {
-    const t = setInterval(() => setI(x => Math.min(x + 1, STAGES.length - 1)), 2500)
-    return () => clearInterval(t)
-  }, [])
-
   return (
     <div className="flex flex-col items-center gap-5 py-16">
       <BouncingEgg />
-      <p className="text-brown-500 font-semibold text-lg">{STAGES[i]}</p>
-      <div className="flex gap-1.5 mt-1">
-        {STAGES.map((_, idx) => (
-          <div
-            key={idx}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              idx <= i ? 'bg-yolk w-6' : 'bg-brown-100 w-2'
-            }`}
-          />
-        ))}
+      <div className="text-center">
+        <p className="text-brown-700 font-bold text-lg animate-pulse">Cracking your profile...</p>
+        <p className="text-brown-400 text-sm italic mt-1">(the AI is thinking, this usually takes 5-10 seconds)</p>
       </div>
     </div>
   )

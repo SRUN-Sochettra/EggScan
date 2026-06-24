@@ -133,6 +133,17 @@ export default function ReadmeRater() {
               ))}
             </ul>
           </div>
+
+          {result.generatedReadme && (
+            <div className="card p-6 bg-[#FFFDF7]">
+              <h2 className="font-display font-bold text-xl text-brown-700 mb-4 flex items-center gap-2">
+                <span className="text-2xl">✨</span> Here, I fixed it for you
+              </h2>
+              <div className="bg-brown-900 text-brown-50 p-4 rounded-xl overflow-x-auto text-sm font-mono whitespace-pre-wrap leading-relaxed shadow-inner">
+                {result.generatedReadme}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -11,4 +11,7 @@ public class AIInsights {
     private String vibe;
     private int eggScore;
     private String eggVerdict;
+    private String predictedJobTitle;
+    private String predictedSalary;
+    private String githubWrapped;
 }

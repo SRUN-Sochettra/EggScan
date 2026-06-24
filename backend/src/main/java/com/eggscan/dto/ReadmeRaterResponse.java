@@ -17,4 +17,5 @@ public class ReadmeRaterResponse {
     private int uselessnessScore;
     private List<String> nitpicks;
     private String roast;
+    private String generatedReadme;
 }

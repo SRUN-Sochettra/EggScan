@@ -12,6 +12,7 @@ import InsightCard from './ScanResultComponents/InsightCard'
 import ProfileHeader from './ScanResultComponents/ProfileHeader'
 import DetailedStats from './ScanResultComponents/DetailedStats'
 import KeyRepositories from './ScanResultComponents/KeyRepositories'
+import GithubWrappedCard from './ScanResultComponents/GithubWrappedCard'
 
 export default function ScanResult({ data }) {
   const resultRef = useRef(null)
@@ -68,6 +69,8 @@ export default function ScanResult({ data }) {
       </InsightCard>
 
       <DetailedStats data={data} />
+
+      <GithubWrappedCard wrappedText={data.githubWrapped} />
 
       <KeyRepositories data={data} />
       </div>

@@ -151,6 +151,9 @@ public class ScanService {
                 .skills(ai.getSkills())
                 .improvements(ai.getImprovements())
                 .vibe(ai.getVibe())
+                .predictedJobTitle(ai.getPredictedJobTitle())
+                .predictedSalary(ai.getPredictedSalary())
+                .githubWrapped(ai.getGithubWrapped())
                 .rawData(data)
                 .stats(stats)
                 .build();

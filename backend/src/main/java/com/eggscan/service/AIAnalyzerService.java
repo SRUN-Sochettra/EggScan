@@ -36,7 +36,7 @@ public class AIAnalyzerService {
                 "You must analyze their stats, repositories, and README excerpts. " +
                 "Determine their EggScore (0-100) and an EggVerdict ('Golden Egg', 'Hard Boiled', 'Fresh Egg', 'Cracked', 'Scrambled'). " +
                 "Provide a brutally honest recruiter impression, actual technical skills demonstrated, and harsh areas for improvement. " +
-                "Provide a single 'vibe' word.";
+                "Provide a single 'vibe' word. Also, invent a humorous 'predictedJobTitle' (e.g. 'Senior YAML Engineer'), a joke 'predictedSalary' (e.g. 'Paid in exposure'), and a 'githubWrapped' sentence (e.g. 'You coded most on Sundays, do you have a life?') based on their profile data.";
 
         String tone = switch (mode.toLowerCase()) {
             case "professional" -> "Be polite, constructive, and highly professional.";
@@ -46,7 +46,7 @@ public class AIAnalyzerService {
             default -> "Be a tired, cynical, brutally honest tech recruiter.";
         };
 
-        String schema = "Respond with valid JSON: { \"firstImpression\": \"\", \"skills\": [], \"improvements\": [], \"vibe\": \"\", \"eggScore\": 0, \"eggVerdict\": \"\" }";
+        String schema = "Respond with valid JSON: { \"firstImpression\": \"\", \"skills\": [], \"improvements\": [], \"vibe\": \"\", \"eggScore\": 0, \"eggVerdict\": \"\", \"predictedJobTitle\": \"\", \"predictedSalary\": \"\", \"githubWrapped\": \"\" }";
 
         String prompt = basePrompt + " " + tone + " " + schema;
         String context = buildContext(scan, stats, readmes);
@@ -63,6 +63,9 @@ public class AIAnalyzerService {
             rawVerdict = "Fresh Egg";
         }
         out.setEggVerdict(rawVerdict);
+        out.setPredictedJobTitle(stripEmoji(json.path("predictedJobTitle").asText()));
+        out.setPredictedSalary(stripEmoji(json.path("predictedSalary").asText()));
+        out.setGithubWrapped(stripEmoji(json.path("githubWrapped").asText()));
 
         List<String> skills = new ArrayList<>();
         json.path("skills").forEach(n -> skills.add(stripEmoji(n.asText())));
@@ -306,7 +309,8 @@ public class AIAnalyzerService {
             "  \"summary\": \"A short 1-sentence summary of their documentation skills.\",\n" +
             "  \"uselessnessScore\": Integer from 0 to 100 (100 = completely useless/empty readmes),\n" +
             "  \"nitpicks\": [\"2 or 3 specific things they did wrong\"],\n" +
-            "  \"roast\": \"A paragraph roasting their lack of documentation.\"\n" +
+            "  \"roast\": \"A paragraph roasting their lack of documentation.\",\n" +
+            "  \"generatedReadme\": \"A full, valid Markdown template for a much better, slightly passive-aggressive README that fixes their mistakes.\"\n" +
             "}";
 
         com.fasterxml.jackson.databind.JsonNode json = groq.chatJson(prompt, context.toString());
@@ -317,6 +321,7 @@ public class AIAnalyzerService {
         json.path("nitpicks").forEach(n -> nitpicks.add(n.asText()));
         res.setNitpicks(nitpicks);
         res.setRoast(json.path("roast").asText(""));
+        res.setGeneratedReadme(json.path("generatedReadme").asText(""));
         return res;
     }
 

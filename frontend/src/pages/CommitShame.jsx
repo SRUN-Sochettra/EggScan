@@ -42,7 +42,7 @@ export default function CommitShame() {
         <div className="flex flex-col gap-1">
           <label htmlFor="username" className="text-brown-700 font-bold text-sm">GitHub Username</label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-brown-300 font-bold text-lg pointer-events-none">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-brown-300 font-bold text-lg pointer-events-none" aria-hidden="true">
               @
             </span>
             <input
@@ -79,7 +79,7 @@ export default function CommitShame() {
             value={tone}
             onChange={(e) => setTone(e.target.value)}
             disabled={loading}
-            className="bg-[#FFFDF7] border-2 border-brown-700 text-brown-700 font-medium rounded-xl focus:ring-brown-500 focus:border-brown-500 block p-3 outline-none cursor-pointer shadow-[0_4px_0_-1px_#2E2416]"
+            className="bg-[#FFFDF7] border-2 border-brown-700 text-brown-700 font-medium rounded-xl focus-visible:ring-2 focus-visible:ring-brown-500 focus:border-brown-500 block p-3 outline-none cursor-pointer shadow-[0_4px_0_-1px_#2E2416]"
           >
             <option value="honest">Honest Reviewer</option>
             <option value="gordon">Gordon Ramsay</option>

@@ -51,7 +51,7 @@ export default function StackRoast() {
               onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''))}
               maxLength={39}
               placeholder="torvalds"
-              className="input-egg w-full"
+              className="input-egg w-full focus-visible:ring-2 focus-visible:ring-brown-500 outline-none"
               disabled={loading}
               required
             />
@@ -65,7 +65,7 @@ export default function StackRoast() {
             value={tone}
             onChange={(e) => setTone(e.target.value)}
             disabled={loading}
-            className="bg-[#FFFDF7] border-2 border-brown-700 text-brown-700 font-medium rounded-xl focus-visible:ring-2 focus-visible:ring-brown-500 focus:border-brown-500 block p-3 outline-none cursor-pointer shadow-[0_4px_0_-1px_#2E2416]"
+            className="bg-[#FFFDF7] border-2 border-brown-700 text-brown-700 font-medium rounded-xl focus-visible:ring-2 focus-visible:ring-brown-500 outline-none block p-3 cursor-pointer shadow-[0_4px_0_-1px_#2E2416]"
           >
             <option value="honest">Honest Reviewer</option>
             <option value="gordon">Gordon Ramsay</option>
@@ -78,7 +78,7 @@ export default function StackRoast() {
         <button
           type="submit"
           disabled={loading || !username.trim()}
-          className="btn-primary flex items-center justify-center gap-2 mt-2"
+          className="btn-primary flex items-center justify-center gap-2 mt-2 focus-visible:ring-2 focus-visible:ring-brown-500 outline-none"
         >
           <IconMagnifier size={20} />
           {loading ? 'Analyzing...' : 'Roast My Stack'}

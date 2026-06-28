@@ -5,3 +5,6 @@
 ## 2026-06-24 - Explicit focus-visible styling on icon-only buttons
 **Learning:** When using custom focus rings with Tailwind (e.g., `focus-visible:ring-2`), it's critical to include `outline-none` to prevent browsers from simultaneously rendering their native focus outlines over the custom styles.
 **Action:** Always pair custom `focus-visible:ring-*` classes with `outline-none` for clean, consistent accessibility styling across all interactive elements.
+## 2024-08-01 - Apply focus-visible and outline-none to all form inputs
+**Learning:** Found multiple form inputs (inputs, selects, submit buttons) missing proper accessible focus outlines in CommitmentShame, ReadmeRater, and StackRoast components, which degrades keyboard navigation usability.
+**Action:** Consistently append `focus-visible:ring-2 focus-visible:ring-brown-500 outline-none` to all interactive form elements that override default browser styling to maintain accessibility standards.

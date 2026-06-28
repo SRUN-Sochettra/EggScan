@@ -52,7 +52,7 @@ export default function CommitShame() {
               onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''))}
               maxLength={39}
               placeholder="torvalds"
-              className="input-egg w-full"
+              className="input-egg w-full focus-visible:ring-2 focus-visible:ring-brown-500 outline-none"
               disabled={loading}
               required
             />
@@ -67,7 +67,7 @@ export default function CommitShame() {
             value={repo}
             onChange={(e) => setRepo(e.target.value)}
             placeholder="e.g. linux (leave blank for all repos)"
-            className="input-egg w-full !pl-4"
+            className="input-egg w-full !pl-4 focus-visible:ring-2 focus-visible:ring-brown-500 outline-none"
             disabled={loading}
           />
         </div>
@@ -92,7 +92,7 @@ export default function CommitShame() {
         <button
           type="submit"
           disabled={loading || !username.trim()}
-          className="btn-primary flex items-center justify-center gap-2 mt-2"
+          className="btn-primary flex items-center justify-center gap-2 mt-2 focus-visible:ring-2 focus-visible:ring-brown-500 outline-none"
         >
           <IconMagnifier size={20} />
           {loading ? 'Judging...' : 'Shame Me'}

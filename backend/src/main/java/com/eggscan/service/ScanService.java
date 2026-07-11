@@ -220,13 +220,21 @@ public class ScanService {
     public RepoDeepDiveResponse repoDeepDive(String username, String repoName, String defaultBranch) {
         log.info("Deep diving into repository: {}/{}", username, repoName);
 
-        GitHubTreeResponse tree = gitHubService.fetchRepoTree(username, repoName, defaultBranch);
-        List<GitHubCommitResponse> commits = gitHubService.fetchRecentCommits(username, repoName);
+        java.util.concurrent.CompletableFuture<GitHubTreeResponse> futureTree = java.util.concurrent.CompletableFuture.supplyAsync(() -> gitHubService.fetchRepoTree(username, repoName, defaultBranch), scanExecutor);
+        java.util.concurrent.CompletableFuture<List<GitHubCommitResponse>> futureCommits = java.util.concurrent.CompletableFuture.supplyAsync(() -> gitHubService.fetchRecentCommits(username, repoName), scanExecutor);
+        java.util.concurrent.CompletableFuture<String> futureReadme = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            String readmeContent = gitHubService.fetchFileContent(username, repoName, "README.md");
+            if (readmeContent == null) {
+                readmeContent = gitHubService.fetchFileContent(username, repoName, "readme.md");
+            }
+            return readmeContent;
+        }, scanExecutor);
 
-        String readme = gitHubService.fetchFileContent(username, repoName, "README.md");
-        if (readme == null) {
-            readme = gitHubService.fetchFileContent(username, repoName, "readme.md");
-        }
+        java.util.concurrent.CompletableFuture.allOf(futureTree, futureCommits, futureReadme).join();
+
+        GitHubTreeResponse tree = futureTree.join();
+        List<GitHubCommitResponse> commits = futureCommits.join();
+        String readme = futureReadme.join();
 
         Map<String, String> configFiles = new HashMap<>();
         List<String> filesToLookFor = List.of("package.json", "pom.xml", "docker-compose.yml", "requirements.txt", "build.gradle", "go.mod");

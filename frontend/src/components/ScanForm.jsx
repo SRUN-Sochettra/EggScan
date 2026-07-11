@@ -34,7 +34,7 @@ export default function ScanForm({ onScan, loading }) {
           type="submit"
           disabled={loading || !username.trim()}
           title={!username.trim() ? "Please enter a username first" : "Scan this profile"}
-          className="btn-primary whitespace-nowrap flex items-center gap-2 justify-center"
+          className="btn-primary whitespace-nowrap flex items-center gap-2 justify-center focus-visible:ring-2 focus-visible:ring-brown-500 outline-none"
         >
           <IconMagnifier size={20} />
           {loading ? 'Cracking…' : 'Scan me'}

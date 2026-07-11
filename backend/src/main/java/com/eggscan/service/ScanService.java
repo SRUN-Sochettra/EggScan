@@ -220,9 +220,9 @@ public class ScanService {
     public RepoDeepDiveResponse repoDeepDive(String username, String repoName, String defaultBranch) {
         log.info("Deep diving into repository: {}/{}", username, repoName);
 
-        CompletableFuture<GitHubTreeResponse> futureTree = CompletableFuture.supplyAsync(() -> gitHubService.fetchRepoTree(username, repoName, defaultBranch), scanExecutor);
-        CompletableFuture<List<GitHubCommitResponse>> futureCommits = CompletableFuture.supplyAsync(() -> gitHubService.fetchRecentCommits(username, repoName), scanExecutor);
-        CompletableFuture<String> futureReadme = CompletableFuture.supplyAsync(() -> {
+        java.util.concurrent.CompletableFuture<GitHubTreeResponse> futureTree = java.util.concurrent.CompletableFuture.supplyAsync(() -> gitHubService.fetchRepoTree(username, repoName, defaultBranch), scanExecutor);
+        java.util.concurrent.CompletableFuture<List<GitHubCommitResponse>> futureCommits = java.util.concurrent.CompletableFuture.supplyAsync(() -> gitHubService.fetchRecentCommits(username, repoName), scanExecutor);
+        java.util.concurrent.CompletableFuture<String> futureReadme = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
             String readmeContent = gitHubService.fetchFileContent(username, repoName, "README.md");
             if (readmeContent == null) {
                 readmeContent = gitHubService.fetchFileContent(username, repoName, "readme.md");
@@ -230,7 +230,7 @@ public class ScanService {
             return readmeContent;
         }, scanExecutor);
 
-        CompletableFuture.allOf(futureTree, futureCommits, futureReadme).join();
+        java.util.concurrent.CompletableFuture.allOf(futureTree, futureCommits, futureReadme).join();
 
         GitHubTreeResponse tree = futureTree.join();
         List<GitHubCommitResponse> commits = futureCommits.join();

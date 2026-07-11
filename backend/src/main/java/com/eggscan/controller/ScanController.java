@@ -42,22 +42,6 @@ public class ScanController {
         return branchName != null && BRANCH_NAME_PATTERN.matcher(branchName).matches();
     }
 
-    private boolean isValidBranchName(String branchName) {
-        return branchName != null && BRANCH_NAME_PATTERN.matcher(branchName).matches();
-    }
-
-    private boolean isValidBranchName(String branchName) {
-        return branchName != null && BRANCH_NAME_PATTERN.matcher(branchName).matches();
-    }
-
-    private boolean isValidBranchName(String branchName) {
-        return branchName != null && BRANCH_NAME_PATTERN.matcher(branchName).matches();
-    }
-
-    private boolean isValidBranchName(String branchName) {
-        return branchName != null && BRANCH_NAME_PATTERN.matcher(branchName).matches();
-    }
-
     private boolean isValidUuid(String id) {
         return id != null && UUID_PATTERN.matcher(id).matches();
     }
@@ -76,66 +60,6 @@ public class ScanController {
                     .firstImpression("Wait, are you actually Linus? *bows down*")
                     .vibe("Literal God Tier. Creator of Git and Linux.")
                     .skills(java.util.List.of("C", "Kernel", "Git", "Yelling at developers on mailing lists"))
-                    .build();
-            return ResponseEntity.ok(easterEgg);
-        }
-
-        if ("defunkt".equalsIgnoreCase(username)) {
-            ScanResponse easterEgg = ScanResponse.builder()
-                    .username("defunkt")
-                    .eggVerdict("Golden Egg")
-                    .eggScore(100)
-                    .firstImpression("Oh wow, it's one of the founding fathers of GitHub.")
-                    .vibe("Tech Royalty. The literal reason we have this site.")
-                    .skills(java.util.List.of("Ruby", "Building empires", "Pioneering the modern web"))
-                    .build();
-            return ResponseEntity.ok(easterEgg);
-        }
-
-        if ("defunkt".equalsIgnoreCase(username)) {
-            ScanResponse easterEgg = ScanResponse.builder()
-                    .username("defunkt")
-                    .eggVerdict("Golden Egg")
-                    .eggScore(100)
-                    .firstImpression("Oh wow, it's one of the founding fathers of GitHub.")
-                    .vibe("Tech Royalty. The literal reason we have this site.")
-                    .skills(java.util.List.of("Ruby", "Building empires", "Pioneering the modern web"))
-                    .build();
-            return ResponseEntity.ok(easterEgg);
-        }
-
-        if ("defunkt".equalsIgnoreCase(username)) {
-            ScanResponse easterEgg = ScanResponse.builder()
-                    .username("defunkt")
-                    .eggVerdict("Golden Egg")
-                    .eggScore(100)
-                    .firstImpression("Oh wow, it's one of the founding fathers of GitHub.")
-                    .vibe("Tech Royalty. The literal reason we have this site.")
-                    .skills(java.util.List.of("Ruby", "Building empires", "Pioneering the modern web"))
-                    .build();
-            return ResponseEntity.ok(easterEgg);
-        }
-
-        if ("defunkt".equalsIgnoreCase(username)) {
-            ScanResponse easterEgg = ScanResponse.builder()
-                    .username("defunkt")
-                    .eggVerdict("Golden Egg")
-                    .eggScore(100)
-                    .firstImpression("Oh wow, it's one of the founding fathers of GitHub.")
-                    .vibe("Tech Royalty. The literal reason we have this site.")
-                    .skills(java.util.List.of("Ruby", "Building empires", "Pioneering the modern web"))
-                    .build();
-            return ResponseEntity.ok(easterEgg);
-        }
-
-        if ("defunkt".equalsIgnoreCase(username)) {
-            ScanResponse easterEgg = ScanResponse.builder()
-                    .username("defunkt")
-                    .eggVerdict("Golden Egg")
-                    .eggScore(100)
-                    .firstImpression("Oh wow, it's one of the founding fathers of GitHub.")
-                    .vibe("Tech Royalty. The literal reason we have this site.")
-                    .skills(java.util.List.of("Ruby", "Building empires", "Pioneering the modern web"))
                     .build();
             return ResponseEntity.ok(easterEgg);
         }

@@ -315,30 +315,32 @@ public class ScanService {
         List<String> filesToLookFor = List.of("package.json", "pom.xml", "docker-compose.yml", "requirements.txt", "build.gradle", "go.mod");
 
         // Fetch configs for top 2 repos to keep it fast
-        data.getRepos().stream().limit(2).forEach(r -> {
-            String repoName = r.getName();
-            GitHubTreeResponse tree = gitHubService.fetchRepoTree(username, repoName, r.getDefault_branch() != null ? r.getDefault_branch() : "main");
-            if (tree != null && tree.getTree() != null) {
-                List<String> matchingFiles = tree.getTree().stream()
-                        .map(GitHubTreeItem::getPath)
-                        .filter(filesToLookFor::contains)
-                        .toList();
+        List<Map.Entry<String, String>> allResults = Flux.fromIterable(data.getRepos().stream().limit(2).toList())
+                .flatMapSequential(r -> {
+                    String repoName = r.getName();
+                    String branch = r.getDefault_branch() != null ? r.getDefault_branch() : "main";
+                    return gitHubService.fetchRepoTreeMono(username, repoName, branch)
+                            .flatMapMany(tree -> {
+                                if (tree == null || tree.getTree() == null) return Flux.empty();
+                                List<String> matchingFiles = tree.getTree().stream()
+                                        .map(GitHubTreeItem::getPath)
+                                        .filter(filesToLookFor::contains)
+                                        .toList();
+                                return Flux.fromIterable(matchingFiles);
+                            })
+                            .flatMapSequential(path -> gitHubService.fetchFileContentMono(username, repoName, path)
+                                    .map(content -> Map.entry(repoName + "/" + path, content)));
+                })
+                .collectList()
+                .block();
 
-                List<Map.Entry<String, String>> results = Flux.fromIterable(matchingFiles)
-                        .flatMapSequential(path -> gitHubService.fetchFileContentMono(username, repoName, path)
-                                .map(content -> Map.entry(repoName + "/" + path, content)))
-                        .collectList()
-                        .block();
-
-                if (results != null) {
-                    for (Map.Entry<String, String> entry : results) {
-                        if (!entry.getValue().isEmpty()) {
-                            configFiles.put(entry.getKey(), entry.getValue());
-                        }
-                    }
+        if (allResults != null) {
+            for (Map.Entry<String, String> entry : allResults) {
+                if (!entry.getValue().isEmpty()) {
+                    configFiles.put(entry.getKey(), entry.getValue());
                 }
             }
-        });
+        }
 
         return analyzer.roastStack(data.getLanguageBreakdown(), configFiles, tone);
     }

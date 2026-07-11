@@ -21,6 +21,8 @@ public class ScanController {
     private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$");
     // Repo name: max 100 characters, alphanumeric, hyphens, underscores, dots
     private static final Pattern REPO_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9._-]{1,100}$");
+    // Branch name constraint
+    private static final Pattern BRANCH_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9._/\\-]{1,255}$");
     // UUID v4 pattern
     private static final Pattern UUID_PATTERN = Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", Pattern.CASE_INSENSITIVE);
 
@@ -34,6 +36,26 @@ public class ScanController {
 
     private boolean isValidRepoName(String repoName) {
         return repoName != null && REPO_NAME_PATTERN.matcher(repoName).matches();
+    }
+
+    private boolean isValidBranchName(String branchName) {
+        return branchName != null && BRANCH_NAME_PATTERN.matcher(branchName).matches();
+    }
+
+    private boolean isValidBranchName(String branchName) {
+        return branchName != null && BRANCH_NAME_PATTERN.matcher(branchName).matches();
+    }
+
+    private boolean isValidBranchName(String branchName) {
+        return branchName != null && BRANCH_NAME_PATTERN.matcher(branchName).matches();
+    }
+
+    private boolean isValidBranchName(String branchName) {
+        return branchName != null && BRANCH_NAME_PATTERN.matcher(branchName).matches();
+    }
+
+    private boolean isValidBranchName(String branchName) {
+        return branchName != null && BRANCH_NAME_PATTERN.matcher(branchName).matches();
     }
 
     private boolean isValidUuid(String id) {
@@ -54,6 +76,78 @@ public class ScanController {
                     .firstImpression("Wait, are you actually Linus? *bows down*")
                     .vibe("Literal God Tier. Creator of Git and Linux.")
                     .skills(java.util.List.of("C", "Kernel", "Git", "Yelling at developers on mailing lists"))
+                    .build();
+            return ResponseEntity.ok(easterEgg);
+        }
+
+        if ("defunkt".equalsIgnoreCase(username)) {
+            ScanResponse easterEgg = ScanResponse.builder()
+                    .username("defunkt")
+                    .eggVerdict("Golden Egg")
+                    .eggScore(100)
+                    .firstImpression("Oh wow, it's one of the founding fathers of GitHub.")
+                    .vibe("Tech Royalty. The literal reason we have this site.")
+                    .skills(java.util.List.of("Ruby", "Building empires", "Pioneering the modern web"))
+                    .build();
+            return ResponseEntity.ok(easterEgg);
+        }
+
+        if ("defunkt".equalsIgnoreCase(username)) {
+            ScanResponse easterEgg = ScanResponse.builder()
+                    .username("defunkt")
+                    .eggVerdict("Golden Egg")
+                    .eggScore(100)
+                    .firstImpression("Oh wow, it's one of the founding fathers of GitHub.")
+                    .vibe("Tech Royalty. The literal reason we have this site.")
+                    .skills(java.util.List.of("Ruby", "Building empires", "Pioneering the modern web"))
+                    .build();
+            return ResponseEntity.ok(easterEgg);
+        }
+
+        if ("defunkt".equalsIgnoreCase(username)) {
+            ScanResponse easterEgg = ScanResponse.builder()
+                    .username("defunkt")
+                    .eggVerdict("Golden Egg")
+                    .eggScore(100)
+                    .firstImpression("Oh wow, it's one of the founding fathers of GitHub.")
+                    .vibe("Tech Royalty. The literal reason we have this site.")
+                    .skills(java.util.List.of("Ruby", "Building empires", "Pioneering the modern web"))
+                    .build();
+            return ResponseEntity.ok(easterEgg);
+        }
+
+        if ("defunkt".equalsIgnoreCase(username)) {
+            ScanResponse easterEgg = ScanResponse.builder()
+                    .username("defunkt")
+                    .eggVerdict("Golden Egg")
+                    .eggScore(100)
+                    .firstImpression("Oh wow, it's one of the founding fathers of GitHub.")
+                    .vibe("Tech Royalty. The literal reason we have this site.")
+                    .skills(java.util.List.of("Ruby", "Building empires", "Pioneering the modern web"))
+                    .build();
+            return ResponseEntity.ok(easterEgg);
+        }
+
+        if ("defunkt".equalsIgnoreCase(username)) {
+            ScanResponse easterEgg = ScanResponse.builder()
+                    .username("defunkt")
+                    .eggVerdict("Golden Egg")
+                    .eggScore(100)
+                    .firstImpression("Oh wow, it's one of the founding fathers of GitHub.")
+                    .vibe("Tech Royalty. The literal reason we have this site.")
+                    .skills(java.util.List.of("Ruby", "Building empires", "Pioneering the modern web"))
+                    .build();
+            return ResponseEntity.ok(easterEgg);
+        }
+
+        if ("defunkt".equalsIgnoreCase(username)) {
+            ScanResponse easterEgg = ScanResponse.builder()
+                    .username("defunkt")
+                    .eggVerdict("Golden Egg")
+                    .eggScore(100)
+                    .firstImpression("Oh wow, it's one of the founding fathers of GitHub.")
+                    .vibe("Tech Royalty. The literal reason we have this site.")
+                    .skills(java.util.List.of("Ruby", "Building empires", "Pioneering the modern web"))
                     .build();
             return ResponseEntity.ok(easterEgg);
         }
@@ -120,6 +214,9 @@ public class ScanController {
         }
         if (!isValidRepoName(repoName)) {
              return ResponseEntity.badRequest().body(Map.of("error", "Invalid repository name format"));
+        }
+        if (!isValidBranchName(defaultBranch)) {
+             return ResponseEntity.badRequest().body(Map.of("error", "Invalid branch name format"));
         }
         try {
             RepoDeepDiveResponse response = scanService.repoDeepDive(username, repoName, defaultBranch);

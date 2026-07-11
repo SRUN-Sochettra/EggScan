@@ -63,7 +63,7 @@ export default function RepoItem({ repo, username }) {
             <button
               onClick={() => setAnalysis(null)}
               className="text-brown-400 hover:text-brown-600 focus-visible:ring-2 focus-visible:ring-brown-500 outline-none rounded"
-              aria-label="Close analysis"
+              aria-label="Close analysis" aria-hidden="false" aria-hidden="false" aria-hidden="false" aria-hidden="false" aria-hidden="false"
               title="Close analysis"
             >
               ✕

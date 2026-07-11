@@ -89,7 +89,7 @@ export default function Home() {
         <div className="flex justify-center mb-6">
           <button
             onClick={() => { setBattleMode(!battleMode); setError(null); setResult(null); setBattleData(null); }}
-            className="text-brown-500 font-bold hover:text-brown-700 underline underline-offset-4 transition-colors text-sm"
+            className="text-brown-500 font-bold hover:text-brown-700 underline underline-offset-4 transition-colors text-sm focus-visible:ring-2 focus-visible:ring-brown-500 outline-none rounded"
           >
             {battleMode ? "Switch to Normal Scan" : "Try 1v1 Battle Mode 🥊"}
           </button>

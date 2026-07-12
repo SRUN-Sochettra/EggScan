@@ -1,7 +1,5 @@
-feat: complete brainstorming tasks across ux, perf, and security
+feat: optimize ReadmeRater performance by parallelizing API calls
 
-This PR consolidates multiple improvements identified during a brainstorming session:
-1. UX/Accessibility form focus states.
-2. Performance concurrency for the GitHub API using Mono.zip.
-3. Security exponential backoff for transient 5xx errors via ExchangeFilterFunction.
-4. Linus Torvalds Easter Egg and improved frontend loader.
+This PR implements a performance improvement identified for the Bolt persona:
+1. Parallelizes independent API calls in `ScanService.rateReadmes` using `CompletableFuture.supplyAsync`.
+2. Fetches the profile README concurrently with the user scan and top repos fetch to minimize total latency.

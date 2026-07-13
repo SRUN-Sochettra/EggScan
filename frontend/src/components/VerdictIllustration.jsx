@@ -6,7 +6,7 @@ export default function VerdictIllustration({ type }) {
 
   if (type === 'golden') {
     return (
-      <svg width="90" height="108" viewBox="0 0 80 96" style={shadow}>
+      <svg aria-hidden="true" width="90" height="108" viewBox="0 0 80 96" style={shadow}>
         <defs>
           <radialGradient id="gold" cx="0.4" cy="0.3">
             <stop offset="0" stopColor="#FFF3C4" />
@@ -31,7 +31,7 @@ export default function VerdictIllustration({ type }) {
 
   if (type === 'hard') {
     return (
-      <svg width="90" height="108" viewBox="0 0 80 96" style={shadow}>
+      <svg aria-hidden="true" width="90" height="108" viewBox="0 0 80 96" style={shadow}>
         <ellipse cx="40" cy="52" rx="30" ry="38" fill="#F4E4C1" {...props} />
         {/* Confident eyes */}
         <circle cx="32" cy="52" r="2" fill={stroke} />
@@ -49,7 +49,7 @@ export default function VerdictIllustration({ type }) {
 
   if (type === 'fresh') {
     return (
-      <svg width="90" height="108" viewBox="0 0 80 96" style={shadow}>
+      <svg aria-hidden="true" width="90" height="108" viewBox="0 0 80 96" style={shadow}>
         {/* Egg with hatching chick */}
         <path d="M 14 56 Q 12 88 40 88 Q 68 88 66 56 L 60 60 L 54 54 L 48 60 L 40 54 L 32 60 L 26 54 L 20 60 Z" fill="#FCE9B8" {...props} />
         {/* Chick top */}
@@ -63,7 +63,7 @@ export default function VerdictIllustration({ type }) {
 
   if (type === 'cracked') {
     return (
-      <svg width="90" height="108" viewBox="0 0 80 96" style={shadow}>
+      <svg aria-hidden="true" width="90" height="108" viewBox="0 0 80 96" style={shadow}>
         <ellipse cx="40" cy="52" rx="30" ry="38" fill="#FCE9B8" {...props} />
         {/* Big crack */}
         <path d="M 22 30 L 28 38 L 24 44 L 32 50 L 28 58 L 36 64" stroke="#C84A2E" strokeWidth="2.5" fill="none" strokeLinecap="round" />
@@ -78,7 +78,7 @@ export default function VerdictIllustration({ type }) {
 
   // scrambled
   return (
-    <svg width="100" height="100" viewBox="0 0 100 100" style={shadow}>
+    <svg aria-hidden="true" width="100" height="100" viewBox="0 0 100 100" style={shadow}>
       {/* Pan */}
       <ellipse cx="50" cy="70" rx="38" ry="10" fill="#4A3A25" {...props} />
       <path d="M 12 70 Q 12 50 50 50 Q 88 50 88 70" fill="#6B5436" {...props} />

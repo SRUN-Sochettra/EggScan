@@ -315,7 +315,7 @@ public class ScanService {
         List<String> filesToLookFor = List.of("package.json", "pom.xml", "docker-compose.yml", "requirements.txt", "build.gradle", "go.mod");
 
         // Fetch configs for top 2 repos to keep it fast
-        data.getRepos().stream().limit(2).forEach(r -> {
+        List<reactor.core.publisher.Mono<List<Map.Entry<String, String>>>> monos = data.getRepos().stream().limit(2).map(r -> {
             String repoName = r.getName();
             GitHubTreeResponse tree = gitHubService.fetchRepoTree(username, repoName, r.getDefault_branch() != null ? r.getDefault_branch() : "main");
             if (tree != null && tree.getTree() != null) {
@@ -324,21 +324,25 @@ public class ScanService {
                         .filter(filesToLookFor::contains)
                         .toList();
 
-                List<Map.Entry<String, String>> results = Flux.fromIterable(matchingFiles)
+                return Flux.fromIterable(matchingFiles)
                         .flatMapSequential(path -> gitHubService.fetchFileContentMono(username, repoName, path)
                                 .map(content -> Map.entry(repoName + "/" + path, content)))
-                        .collectList()
-                        .block();
+                        .collectList();
+            }
+            return reactor.core.publisher.Mono.just(new java.util.ArrayList<Map.Entry<String, String>>());
+        }).toList();
 
-                if (results != null) {
-                    for (Map.Entry<String, String> entry : results) {
-                        if (!entry.getValue().isEmpty()) {
-                            configFiles.put(entry.getKey(), entry.getValue());
-                        }
+        List<List<Map.Entry<String, String>>> allResults = Flux.concat(monos).collectList().block();
+
+        if (allResults != null) {
+            for (List<Map.Entry<String, String>> results : allResults) {
+                for (Map.Entry<String, String> entry : results) {
+                    if (!entry.getValue().isEmpty()) {
+                        configFiles.put(entry.getKey(), entry.getValue());
                     }
                 }
             }
-        });
+        }
 
         return analyzer.roastStack(data.getLanguageBreakdown(), configFiles, tone);
     }

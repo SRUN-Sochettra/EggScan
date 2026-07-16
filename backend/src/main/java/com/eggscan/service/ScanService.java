@@ -329,7 +329,7 @@ public class ScanService {
                                 .map(content -> Map.entry(repoName + "/" + path, content)))
                         .collectList();
             }
-            return reactor.core.publisher.Mono.just(new java.util.ArrayList<Map.Entry<String, String>>());
+            return reactor.core.publisher.Mono.just((List<Map.Entry<String, String>>) new java.util.ArrayList<Map.Entry<String, String>>());
         }).toList();
 
         List<List<Map.Entry<String, String>>> allResults = Flux.concat(monos).collectList().block();

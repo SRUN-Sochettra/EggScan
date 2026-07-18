@@ -321,10 +321,20 @@ public class ScanService {
         List<String> filesToLookFor = List.of("package.json", "pom.xml", "docker-compose.yml", "requirements.txt", "build.gradle", "go.mod");
 
         // Fetch configs for top 2 repos to keep it fast
-        List<reactor.core.publisher.Mono<List<Map.Entry<String, String>>>> monos = data.getRepos().stream().limit(2).map(r -> {
-            String repoName = r.getName();
-            GitHubTreeResponse tree = gitHubService.fetchRepoTree(username, repoName, r.getDefault_branch() != null ? r.getDefault_branch() : "main");
-            if (tree != null && tree.getTree() != null) {
+        List<java.util.concurrent.CompletableFuture<Map.Entry<String, GitHubTreeResponse>>> treeFutures = data.getRepos().stream().limit(2).map(r -> {
+            return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                String repoName = r.getName();
+                GitHubTreeResponse tree = gitHubService.fetchRepoTree(username, repoName, r.getDefault_branch() != null ? r.getDefault_branch() : "main");
+                return Map.entry(repoName, tree != null ? tree : new GitHubTreeResponse());
+            }, scanExecutor);
+        }).toList();
+
+        java.util.concurrent.CompletableFuture.allOf(treeFutures.toArray(new java.util.concurrent.CompletableFuture[0])).join();
+
+        List<reactor.core.publisher.Mono<List<Map.Entry<String, String>>>> monos = treeFutures.stream().map(java.util.concurrent.CompletableFuture::join).map(entry -> {
+            String repoName = entry.getKey();
+            GitHubTreeResponse tree = entry.getValue();
+            if (tree.getTree() != null) {
                 List<String> matchingFiles = tree.getTree().stream()
                         .map(GitHubTreeItem::getPath)
                         .filter(filesToLookFor::contains)

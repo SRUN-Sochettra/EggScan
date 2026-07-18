@@ -53,3 +53,7 @@
 ## 2026-07-12 - Parallelizing independent API calls
 **Learning:** In orchestration methods, independent API calls (like fetching a static profile repo README vs fetching user repos) should be parallelized rather than executed sequentially to minimize total latency.
 **Action:** Applied CompletableFuture.supplyAsync to fetch the profile README concurrently in rateReadmes.
+
+## 2024-07-18 - Optimize blocking calls in Stream Map operations
+**Learning:** Performing sequential blocking network calls inside a `.map()` block over a stream (like iterating over repositories) causes O(n) blocking latency. In WebFlux, even outside of reactive chains, these independent tasks should be parallelized.
+**Action:** When iterating over independent entities to perform blocking I/O (like `gitHubService.fetchRepoTree`), use `CompletableFuture.supplyAsync()` to dispatch the tasks concurrently, then collect them with `CompletableFuture.allOf().join()` before proceeding.

@@ -45,3 +45,11 @@
 ## 2024-06-22 - Optimizing Sequential API Calls with Mono.zip
 **Learning:** In Spring WebFlux applications, performing sequential `WebClient` requests using `.block()` multiple times in a single method (e.g., fetching a profile then fetching repos) creates an unnecessary latency bottleneck where Total Latency = Latency A + Latency B.
 **Action:** When making independent external API calls, return them as unblocked `Mono`s and combine them using `Mono.zip(monoA, monoB).block()`. This parallelizes the requests, reducing the Total Latency to max(Latency A, Latency B) without sacrificing readability. Furthermore, remember to update associated mock tests, as concurrent reactive chains change the expectation of how/when mock endpoints are requested compared to sequential blocking calls.
+
+## 2026-07-12 - Using stable keys in React lists
+**Learning:** Found that iterating over arrays using index as the `key` prop in React components (like in `KeyRepositories`) can cause unnecessary re-renders and performance issues.
+**Action:** Always use stable, unique identifiers (like `repo.name`) for the `key` prop in React lists to optimize rendering performance.
+
+## 2026-07-12 - Parallelizing independent API calls
+**Learning:** In orchestration methods, independent API calls (like fetching a static profile repo README vs fetching user repos) should be parallelized rather than executed sequentially to minimize total latency.
+**Action:** Applied CompletableFuture.supplyAsync to fetch the profile README concurrently in rateReadmes.

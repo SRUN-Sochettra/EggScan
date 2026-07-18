@@ -14,6 +14,7 @@ function BouncingEgg() {
   return (
     <div className="relative w-20 h-24">
       <svg
+        aria-hidden="true"
         className="absolute inset-0 animate-bounce-slow"
         viewBox="0 0 80 96"
         style={{ filter: 'drop-shadow(0 4px 0 #2E2416)' }}

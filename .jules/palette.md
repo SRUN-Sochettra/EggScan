@@ -8,3 +8,10 @@
 ## 2024-08-01 - Apply focus-visible and outline-none to all form inputs
 **Learning:** Found multiple form inputs (inputs, selects, submit buttons) missing proper accessible focus outlines in CommitmentShame, ReadmeRater, and StackRoast components, which degrades keyboard navigation usability.
 **Action:** Consistently append `focus-visible:ring-2 focus-visible:ring-brown-500 outline-none` to all interactive form elements that override default browser styling to maintain accessibility standards.
+## 2026-07-12 - Adding aria-hidden to decorative SVGs
+**Learning:** SVG icons that are purely decorative, especially inside buttons that already have text labels (like 'Download Image' or 'Share Battle'), can cause screen readers to announce confusing or redundant information if not properly hidden.
+**Action:** Always append `aria-hidden="true"` to SVG tags used as decorative icons alongside text, or when they are part of a visually complex but semantically simple interactive element.
+
+## 2026-07-13 - Hide decorative SVGs from screen readers
+**Learning:** Decorative inline SVGs in buttons or loaders lack semantic value and should be hidden from screen readers using `aria-hidden="true"` to prevent cluttering the accessibility tree.
+**Action:** Add `aria-hidden="true"` to all purely visual `<svg>` elements.

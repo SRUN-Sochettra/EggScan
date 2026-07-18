@@ -35,7 +35,8 @@ export default function RepoItem({ repo, username }) {
       {!analysis && !isAnalyzing && (
          <button
            onClick={handleDeepDive}
-           className="mt-2 text-xs font-semibold bg-egg-300 text-brown-800 px-3 py-1 rounded-full hover:bg-egg-400 transition-colors"
+           aria-label={`Deep dive into ${repo.name}`}
+           className="mt-2 text-xs font-semibold bg-egg-300 text-brown-800 px-3 py-1 rounded-full hover:bg-egg-400 transition-colors focus-visible:ring-2 focus-visible:ring-brown-500 outline-none"
          >
            Deep Dive 🔍
          </button>
@@ -63,7 +64,7 @@ export default function RepoItem({ repo, username }) {
             <button
               onClick={() => setAnalysis(null)}
               className="text-brown-400 hover:text-brown-600 focus-visible:ring-2 focus-visible:ring-brown-500 outline-none rounded"
-              aria-label="Close analysis" aria-hidden="false"
+              aria-label="Close analysis"
               title="Close analysis"
             >
               ✕

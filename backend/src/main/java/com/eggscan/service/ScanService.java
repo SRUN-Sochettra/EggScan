@@ -292,14 +292,20 @@ public class ScanService {
 
     public ReadmeRaterResponse rateReadmes(String username, String tone) {
         log.info("Rating readmes for username: {}, tone: {}", username, tone);
-        ScanResult data = gitHubService.scanUser(username);
 
+        // Optimization (Bolt): Fetch profile README concurrently to reduce latency.
+        java.util.concurrent.CompletableFuture<String> futureProfileReadme = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            String profileReadme = gitHubService.fetchFileContent(username, username, "README.md");
+            if (profileReadme == null) {
+                profileReadme = gitHubService.fetchFileContent(username, username, "readme.md");
+            }
+            return profileReadme;
+        }, scanExecutor);
+
+        ScanResult data = gitHubService.scanUser(username);
         Map<String, String> readmes = readmeService.fetchTopReadmes(username, data.getRepos(), 3);
 
-        String profileReadme = gitHubService.fetchFileContent(username, username, "README.md");
-        if (profileReadme == null) {
-            profileReadme = gitHubService.fetchFileContent(username, username, "readme.md");
-        }
+        String profileReadme = futureProfileReadme.join();
         if (profileReadme != null) {
             readmes.put(username + "/" + username + " (Profile)", profileReadme);
         }
@@ -315,29 +321,31 @@ public class ScanService {
         List<String> filesToLookFor = List.of("package.json", "pom.xml", "docker-compose.yml", "requirements.txt", "build.gradle", "go.mod");
 
         // Fetch configs for top 2 repos to keep it fast
-        List<Map.Entry<String, String>> allResults = Flux.fromIterable(data.getRepos().stream().limit(2).toList())
-                .flatMapSequential(r -> {
-                    String repoName = r.getName();
-                    String branch = r.getDefault_branch() != null ? r.getDefault_branch() : "main";
-                    return gitHubService.fetchRepoTreeMono(username, repoName, branch)
-                            .flatMapMany(tree -> {
-                                if (tree == null || tree.getTree() == null) return Flux.empty();
-                                List<String> matchingFiles = tree.getTree().stream()
-                                        .map(GitHubTreeItem::getPath)
-                                        .filter(filesToLookFor::contains)
-                                        .toList();
-                                return Flux.fromIterable(matchingFiles);
-                            })
-                            .flatMapSequential(path -> gitHubService.fetchFileContentMono(username, repoName, path)
-                                    .map(content -> Map.entry(repoName + "/" + path, content)));
-                })
-                .collectList()
-                .block();
+        List<reactor.core.publisher.Mono<List<Map.Entry<String, String>>>> monos = data.getRepos().stream().limit(2).map(r -> {
+            String repoName = r.getName();
+            GitHubTreeResponse tree = gitHubService.fetchRepoTree(username, repoName, r.getDefault_branch() != null ? r.getDefault_branch() : "main");
+            if (tree != null && tree.getTree() != null) {
+                List<String> matchingFiles = tree.getTree().stream()
+                        .map(GitHubTreeItem::getPath)
+                        .filter(filesToLookFor::contains)
+                        .toList();
+
+                return Flux.fromIterable(matchingFiles)
+                        .flatMapSequential(path -> gitHubService.fetchFileContentMono(username, repoName, path)
+                                .map(content -> Map.entry(repoName + "/" + path, content)))
+                        .collectList();
+            }
+            return reactor.core.publisher.Mono.just((List<Map.Entry<String, String>>) new java.util.ArrayList<Map.Entry<String, String>>());
+        }).toList();
+
+        List<List<Map.Entry<String, String>>> allResults = Flux.concat(monos).collectList().block();
 
         if (allResults != null) {
-            for (Map.Entry<String, String> entry : allResults) {
-                if (!entry.getValue().isEmpty()) {
-                    configFiles.put(entry.getKey(), entry.getValue());
+            for (List<Map.Entry<String, String>> results : allResults) {
+                for (Map.Entry<String, String> entry : results) {
+                    if (!entry.getValue().isEmpty()) {
+                        configFiles.put(entry.getKey(), entry.getValue());
+                    }
                 }
             }
         }

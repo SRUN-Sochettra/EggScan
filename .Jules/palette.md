@@ -7,3 +7,7 @@
 ## 2024-06-24 - Enhancing BattleForm Input Accessibility and Focus States
 **Learning:** Found that the `BattleForm` component lacked visual focus indicators for keyboard navigation and the decorative `@` symbols were not explicitly hidden from screen readers. This hinders the experience for users navigating via keyboard and those relying on assistive technologies.
 **Action:** Always ensure that interactive elements like inputs and buttons have distinct focus rings using standard Tailwind classes (e.g., `focus-visible:ring-2 focus-visible:ring-brown-500 outline-none`). Additionally, explicitly mark purely visual/decorative icons or text inside input containers with `aria-hidden="true"` to prevent screen readers from announcing them unnecessarily, especially when a proper `aria-label` is already present on the input.
+
+## 2026-07-12 - Adding focus rings and proper ARIA labels to buttons
+**Learning:** Found that dynamically generated buttons like 'Deep Dive' lacked specific `aria-label`s and focus indicators, and some close buttons had redundant `aria-hidden="false"` attributes.
+**Action:** Always ensure interactive elements have distinct focus rings (e.g., `focus-visible:ring-2`) and descriptive ARIA labels, and avoid redundant ARIA attributes.

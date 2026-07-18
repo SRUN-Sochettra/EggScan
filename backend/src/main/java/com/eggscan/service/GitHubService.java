@@ -106,6 +106,14 @@ public class GitHubService {
                 .block();
     }
 
+    public Mono<GitHubTreeResponse> fetchRepoTreeMono(String username, String repoName, String defaultBranch) {
+        return client.get()
+                .uri("/repos/{u}/{r}/git/trees/{b}?recursive=1", username, repoName, defaultBranch)
+                .retrieve()
+                .bodyToMono(GitHubTreeResponse.class)
+                .onErrorResume(e -> Mono.empty());
+    }
+
     public Mono<String> fetchFileContentMono(String username, String repoName, String path) {
         return client.get()
                 .uri("/repos/{u}/{r}/contents/{p}", username, repoName, path)

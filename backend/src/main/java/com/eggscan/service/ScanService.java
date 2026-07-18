@@ -292,14 +292,20 @@ public class ScanService {
 
     public ReadmeRaterResponse rateReadmes(String username, String tone) {
         log.info("Rating readmes for username: {}, tone: {}", username, tone);
-        ScanResult data = gitHubService.scanUser(username);
 
+        // Optimization (Bolt): Fetch profile README concurrently to reduce latency.
+        java.util.concurrent.CompletableFuture<String> futureProfileReadme = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            String profileReadme = gitHubService.fetchFileContent(username, username, "README.md");
+            if (profileReadme == null) {
+                profileReadme = gitHubService.fetchFileContent(username, username, "readme.md");
+            }
+            return profileReadme;
+        }, scanExecutor);
+
+        ScanResult data = gitHubService.scanUser(username);
         Map<String, String> readmes = readmeService.fetchTopReadmes(username, data.getRepos(), 3);
 
-        String profileReadme = gitHubService.fetchFileContent(username, username, "README.md");
-        if (profileReadme == null) {
-            profileReadme = gitHubService.fetchFileContent(username, username, "readme.md");
-        }
+        String profileReadme = futureProfileReadme.join();
         if (profileReadme != null) {
             readmes.put(username + "/" + username + " (Profile)", profileReadme);
         }

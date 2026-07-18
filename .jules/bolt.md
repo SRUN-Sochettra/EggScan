@@ -49,3 +49,7 @@
 ## 2026-07-12 - Using stable keys in React lists
 **Learning:** Found that iterating over arrays using index as the `key` prop in React components (like in `KeyRepositories`) can cause unnecessary re-renders and performance issues.
 **Action:** Always use stable, unique identifiers (like `repo.name`) for the `key` prop in React lists to optimize rendering performance.
+
+## 2026-07-12 - Parallelizing independent API calls
+**Learning:** In orchestration methods, independent API calls (like fetching a static profile repo README vs fetching user repos) should be parallelized rather than executed sequentially to minimize total latency.
+**Action:** Applied CompletableFuture.supplyAsync to fetch the profile README concurrently in rateReadmes.

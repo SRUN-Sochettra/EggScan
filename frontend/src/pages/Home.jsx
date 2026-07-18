@@ -135,7 +135,7 @@ export default function Home() {
 function FloatingEgg({ className, size, delay, opacity }) {
   return (
     <div className={className} style={{ opacity }}>
-      <svg
+      <svg aria-hidden="true"
         width={size}
         height={size * 1.2}
         viewBox="0 0 80 96"

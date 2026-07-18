@@ -15,3 +15,7 @@
 ## 2026-07-13 - Hide decorative SVGs from screen readers
 **Learning:** Decorative inline SVGs in buttons or loaders lack semantic value and should be hidden from screen readers using `aria-hidden="true"` to prevent cluttering the accessibility tree.
 **Action:** Add `aria-hidden="true"` to all purely visual `<svg>` elements.
+
+## 2026-07-18 - Explicit aria-hidden on decorative SVGs
+**Learning:** Decorative inline SVGs in branding components like logos or large background graphics lack semantic value. They should be explicitly hidden from screen readers to avoid cluttering the accessibility tree.
+**Action:** Add `aria-hidden="true"` to all purely visual `<svg>` elements like the application logo and background illustrations.

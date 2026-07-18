@@ -1,6 +1,6 @@
 export default function EggLogo({ size = 72, animated = false }) {
   return (
-    <svg
+    <svg aria-hidden="true"
       width={size}
       height={size * 1.2}
       viewBox="0 0 80 96"

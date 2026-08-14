@@ -1,13 +1,17 @@
-## 2024-06-10 - Adding form input and modal close button accessibility
-**Learning:** Found an accessibility issue pattern specific to this app's components: custom inputs with absolute positioned icons/text (like the `@` symbol in `ScanForm` and `BattleForm`) often lack explicit `aria-label`s because they rely on visual placeholders or adjacent layout elements rather than semantic labels. Also, the `Leaderboard` modal used a standard text "✕" as an icon-only button without an `aria-label`.
-**Action:** Always verify that inputs with decorative/absolute-positioned elements still have proper `aria-label`s or associated `<label>`s, and ensure all icon-only or decorative-text-only buttons (like "✕") have clear `aria-label`s describing their action.
-## 2024-06-15 - Semantics Over onClick
-**Learning:** In the frontend leaderboard component, interactive elements designed for selection (like tapping a list item) were using `<div>` with an `onClick` handler. This creates an accessibility barrier because it strips the element of its inherent semantic meaning and necessary keyboard event handlers. Screen readers and keyboard users rely on standard interactive roles like `<button>`.
-**Action:** Always favor semantic elements like `<button>` over `<div>` with `onClick` when the entire block is meant to be actionable. This provides focus states and keyboard interaction (Space/Enter) by default, requiring only CSS adjustments (like `w-full text-left` and `focus-visible:ring-2`) to match the desired layout.
-## 2024-06-24 - Enhancing BattleForm Input Accessibility and Focus States
-**Learning:** Found that the `BattleForm` component lacked visual focus indicators for keyboard navigation and the decorative `@` symbols were not explicitly hidden from screen readers. This hinders the experience for users navigating via keyboard and those relying on assistive technologies.
-**Action:** Always ensure that interactive elements like inputs and buttons have distinct focus rings using standard Tailwind classes (e.g., `focus-visible:ring-2 focus-visible:ring-brown-500 outline-none`). Additionally, explicitly mark purely visual/decorative icons or text inside input containers with `aria-hidden="true"` to prevent screen readers from announcing them unnecessarily, especially when a proper `aria-label` is already present on the input.
 
-## 2026-07-12 - Adding focus rings and proper ARIA labels to buttons
-**Learning:** Found that dynamically generated buttons like 'Deep Dive' lacked specific `aria-label`s and focus indicators, and some close buttons had redundant `aria-hidden="false"` attributes.
-**Action:** Always ensure interactive elements have distinct focus rings (e.g., `focus-visible:ring-2`) and descriptive ARIA labels, and avoid redundant ARIA attributes.
+## 2024-06-22 - Explicit Focus States and SR-Only Labels
+**Learning:** Custom inputs with absolute-positioned visual elements (like an adjacent `@` symbol) and native select elements often drop standard accessibility affordances. Using `aria-label` is good, but connecting an explicit, visually-hidden `<label className="sr-only">` provides stronger support for form autofill and screen reader context. Furthermore, interactive elements (buttons, inputs, selects) need explicitly defined `focus-visible` styles matching the theme (`focus-visible:ring-2 focus-visible:ring-brown-500 outline-none`) because browsers drop native focus rings when custom borders/backgrounds are applied.
+**Action:** When creating custom form layouts or using Tailwind utility classes that override native browser styles, always manually implement a `focus-visible` state and ensure standard `<label>` semantics are preserved using `sr-only` if visual design prohibits a visible label.
+## 2026-06-24 - Explicit focus-visible styling on icon-only buttons
+**Learning:** When using custom focus rings with Tailwind (e.g., `focus-visible:ring-2`), it's critical to include `outline-none` to prevent browsers from simultaneously rendering their native focus outlines over the custom styles.
+**Action:** Always pair custom `focus-visible:ring-*` classes with `outline-none` for clean, consistent accessibility styling across all interactive elements.
+## 2024-08-01 - Apply focus-visible and outline-none to all form inputs
+**Learning:** Found multiple form inputs (inputs, selects, submit buttons) missing proper accessible focus outlines in CommitmentShame, ReadmeRater, and StackRoast components, which degrades keyboard navigation usability.
+**Action:** Consistently append `focus-visible:ring-2 focus-visible:ring-brown-500 outline-none` to all interactive form elements that override default browser styling to maintain accessibility standards.
+## 2026-07-12 - Adding aria-hidden to decorative SVGs
+**Learning:** SVG icons that are purely decorative, especially inside buttons that already have text labels (like 'Download Image' or 'Share Battle'), can cause screen readers to announce confusing or redundant information if not properly hidden.
+**Action:** Always append `aria-hidden="true"` to SVG tags used as decorative icons alongside text, or when they are part of a visually complex but semantically simple interactive element.
+
+## 2026-07-13 - Hide decorative SVGs from screen readers
+**Learning:** Decorative inline SVGs in buttons or loaders lack semantic value and should be hidden from screen readers using `aria-hidden="true"` to prevent cluttering the accessibility tree.
+**Action:** Add `aria-hidden="true"` to all purely visual `<svg>` elements.

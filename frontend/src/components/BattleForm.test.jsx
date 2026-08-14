@@ -6,7 +6,7 @@ import { vi } from 'vitest'
 describe('BattleForm Component', () => {
   it('renders correctly', () => {
     render(<BattleForm onBattle={vi.fn()} loading={false} />)
-    expect(screen.getByText('🥊 1v1 Battle Mode')).toBeInTheDocument()
+    expect(screen.getByText('1v1 Battle Mode')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Player 1')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Player 2')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'FIGHT!' })).toBeInTheDocument()

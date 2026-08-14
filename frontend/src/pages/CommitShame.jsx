@@ -128,15 +128,13 @@ export default function CommitShame() {
           </div>
 
           <div className="card p-6 bg-[#FFFDF7]">
-            <h2 className="font-display font-bold text-xl text-brown-700 mb-4 flex items-center gap-2">
-              <span className="text-2xl">🔥</span> The Roast
+            <h2 className="font-display font-bold text-xl text-brown-700 mb-4 flex items-center gap-2"> The Roast
             </h2>
             <p className="text-brown-600 italic leading-relaxed">"{result.roast}"</p>
           </div>
 
           <div className="card p-6 bg-[#FFFDF7]">
-            <h2 className="font-display font-bold text-xl text-brown-700 mb-4 flex items-center gap-2">
-              <span className="text-2xl">🗑️</span> Hall of Shame
+            <h2 className="font-display font-bold text-xl text-brown-700 mb-4 flex items-center gap-2"> Hall of Shame
             </h2>
             <ul className="space-y-3">
               {result.worstCommits.map((msg, idx) => (

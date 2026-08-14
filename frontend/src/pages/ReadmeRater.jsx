@@ -114,15 +114,13 @@ export default function ReadmeRater() {
           </div>
 
           <div className="card p-6 bg-[#FFFDF7]">
-            <h2 className="font-display font-bold text-xl text-brown-700 mb-4 flex items-center gap-2">
-              <span className="text-2xl">🔥</span> The Roast
+            <h2 className="font-display font-bold text-xl text-brown-700 mb-4 flex items-center gap-2"> The Roast
             </h2>
             <p className="text-brown-600 italic leading-relaxed">"{result.roast}"</p>
           </div>
 
           <div className="card p-6 bg-[#FFFDF7]">
-            <h2 className="font-display font-bold text-xl text-brown-700 mb-4 flex items-center gap-2">
-              <span className="text-2xl">📝</span> Nitpicks
+            <h2 className="font-display font-bold text-xl text-brown-700 mb-4 flex items-center gap-2"> Nitpicks
             </h2>
             <ul className="space-y-3">
               {result.nitpicks.map((msg, idx) => (
@@ -136,8 +134,7 @@ export default function ReadmeRater() {
 
           {result.generatedReadme && (
             <div className="card p-6 bg-[#FFFDF7]">
-              <h2 className="font-display font-bold text-xl text-brown-700 mb-4 flex items-center gap-2">
-                <span className="text-2xl">✨</span> Here, I fixed it for you
+              <h2 className="font-display font-bold text-xl text-brown-700 mb-4 flex items-center gap-2"> Here, I fixed it for you
               </h2>
               <div className="bg-brown-900 text-brown-50 p-4 rounded-xl overflow-x-auto text-sm font-mono whitespace-pre-wrap leading-relaxed shadow-inner">
                 {result.generatedReadme}

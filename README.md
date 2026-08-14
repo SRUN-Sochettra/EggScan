@@ -1,4 +1,4 @@
-# 🥚 EggScan
+#  EggScan
 
 ![EggScan Cover Banner](cover.png)
 
@@ -15,64 +15,64 @@
 
 ---
 
-## 📖 Table of Contents
-- [✨ Core Features](#-core-features)
-- [🥚 The Egg Verdict System](#-the-egg-verdict-system)
-- [🏗️ Project Architecture](#️-project-architecture)
-- [🚀 Getting Started](#-getting-started)
+##  Table of Contents
+- [ Core Features](#-core-features)
+- [ The Egg Verdict System](#-the-egg-verdict-system)
+- [ Project Architecture](#-project-architecture)
+- [ Getting Started](#-getting-started)
   - [Prerequisites](#prerequisites)
   - [Backend Setup (Spring Boot)](#backend-setup-spring-boot)
   - [Frontend Setup (Vite + React)](#frontend-setup-vite--react)
-- [⚙️ Configuration & Environment Variables](#️-configuration--environment-variables)
-- [⚡ Performance & Technical Highlights](#-performance--technical-highlights)
-- [🤝 Contributing](#-contributing)
-- [🛡️ Security Policy](#️-security-policy)
-- [📜 Code of Conduct](#-code-of-conduct)
-- [📄 License](#-license)
+- [ Configuration & Environment Variables](#-configuration--environment-variables)
+- [ Performance & Technical Highlights](#-performance--technical-highlights)
+- [ Contributing](#-contributing)
+- [ Security Policy](#-security-policy)
+- [ Code of Conduct](#-code-of-conduct)
+- [ License](#-license)
 
 ---
 
-## ✨ Core Features
+##  Core Features
 
-*   **🔍 Profile Scanner**  
+*   ** Profile Scanner**
     Fetches user biography, pinned repositories, language distribution, and real-time contribution statistics via GitHub's GraphQL API. Deliver a humorous "roast" or professional constructive feedback.
-*   **🥊 1v1 Battle Mode**  
+*   ** 1v1 Battle Mode**
     Pit two GitHub developers against each other! Compares their stats concurrently and generates a detailed, fun battle report determining the supreme winner.
-*   **🔬 Repository Deep Dive**  
+*   ** Repository Deep Dive**
     Analyzes specific repositories by mapping their architecture, codebase structure, configuration files (`package.json`, `pom.xml`, etc.), and recent commit quality, providing actionable code improvements.
-*   **🔥 CommitShame**  
+*   ** CommitShame**
     Rates commit message quality and calculates a **Laziness Score** (from 0 to 100). Exposes lazy commits in a dedicated "Hall of Shame".
-*   **📝 READMErater**  
+*   ** READMErater**
     Inspects your project/profile readmes, computes a **Uselessness Score**, and provides a list of direct nitpicks to improve your documentation.
-*   **⚙️ StackRoast**  
+*   ** StackRoast**
     Analyzes your language distributions and configuration files to roast your tech stack choices.
-*   **🎭 Multi-Persona Roaster**  
+*   ** Multi-Persona Roaster**
     Choose your roaster style! Available personas include:
     *   **Honest Reviewer**: Balanced, direct, and helpful.
     *   **Gordon Ramsay**: High-heat cooking roasts.
     *   **Disappointed Parent**: The guilt-trip audit.
     *   **Silicon Valley Tech Bro**: Web3, AI, and VC buzzwords galore.
     *   **Salty Pirate**: Nautical insults and high-seas programming wisdom.
-*   **🎨 Glassmorphic React Dashboard**  
+*   ** Glassmorphic React Dashboard**
     A dark-themed, premium UI built with Vite and Tailwind CSS featuring interactive feedback cards, live loader animations, and responsive layouts.
 
 ---
 
-## 🥚 The Egg Verdict System
+##  The Egg Verdict System
 
 EggScan grades your GitHub profile on a scale of **0 to 100** (the **Egg Score**) and assigns one of five egg-themed personality verdicts based on your codebase health, activity, and profile presentation:
 
 | Verdict | Emoji | Score Range | Tagline | Description |
 | :--- | :---: | :---: | :--- | :--- |
-| **Golden Egg** | 🥚✨ | 80–100 | *recruiter ready* | Exceptional profile. Spotless repositories, active contributions, and perfect presentation. Ready for any recruiter. |
-| **Hard Boiled** | 🍳 | 65–79 | *solid profile* | Strong developer presence. Solid repositories and consistent codebase patterns, with a few areas to polish. |
-| **Fresh Egg** | 🐣 | 45–64 | *just getting started* | A budding developer profile. Shows clear potential and basic projects, but lacks depth or documentation. |
-| **Cracked** | 🥚💔 | 25–44 | *needs work* | Incomplete or messy profile. Lacks pinned repositories, has sparse contributions, or needs major refactoring. |
-| **Scrambled** | 🍳💀 | 0–24 | *do not apply yet* | Absolute chaos. Little to no activity, missing READMEs, or codebases that need immediate help. |
+| **Golden Egg** |  | 80–100 | *recruiter ready* | Exceptional profile. Spotless repositories, active contributions, and perfect presentation. Ready for any recruiter. |
+| **Hard Boiled** |  | 65–79 | *solid profile* | Strong developer presence. Solid repositories and consistent codebase patterns, with a few areas to polish. |
+| **Fresh Egg** |  | 45–64 | *just getting started* | A budding developer profile. Shows clear potential and basic projects, but lacks depth or documentation. |
+| **Cracked** |  | 25–44 | *needs work* | Incomplete or messy profile. Lacks pinned repositories, has sparse contributions, or needs major refactoring. |
+| **Scrambled** |  | 0–24 | *do not apply yet* | Absolute chaos. Little to no activity, missing READMEs, or codebases that need immediate help. |
 
 ---
 
-## 🏗️ Project Architecture
+##  Project Architecture
 
 EggScan is structured as a monorepo containing decoupled backend (Java) and frontend (React) services:
 
@@ -111,7 +111,7 @@ eggscan/
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 Before running the application, make sure you have installed:
@@ -131,7 +131,7 @@ Before running the application, make sure you have installed:
     ```bash
     cp .env.example .env
     ```
-3.  Open `.env` and fill in your credentials (see [Configuration](#️-configuration--environment-variables) below):
+3.  Open `.env` and fill in your credentials (see [Configuration](#-configuration--environment-variables) below):
     ```env
     GITHUB_TOKEN=your_personal_access_token
     GROQ_API_KEY=your_groq_api_key
@@ -166,7 +166,7 @@ Before running the application, make sure you have installed:
 
 ---
 
-## ⚙️ Configuration & Environment Variables
+##  Configuration & Environment Variables
 
 ### Backend Configuration
 The backend depends on the following keys set in `backend/.env`:
@@ -188,7 +188,7 @@ VITE_API_URL=https://api.yourdomain.com
 
 ---
 
-## ⚡ Performance & Technical Highlights
+##  Performance & Technical Highlights
 
 *   **CompletableFuture Concurrency**: Combines asynchronous thread pools to fetch user profiles and repository listings in parallel, speeding up the scan time by ~50%. Pit-stops for 1v1 battles are also fully parallelized.
 *   **Reactive Network Config Fetching**: In deep-dive analysis, configuration files are scraped from repository structures using Non-blocking Spring WebClient and Project Reactor (`Flux.flatMapSequential`). This handles network-bound operations with maximum throughput and zero thread blocking.
@@ -198,20 +198,20 @@ VITE_API_URL=https://api.yourdomain.com
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Please read our [CONTRIBUTING.md](CONTRIBUTING.md) to learn how to open pull requests, submit issues, and write clean code for EggScan.
 
 ---
 
-## 🛡️ Security Policy
+##  Security Policy
 If you discover a security vulnerability within EggScan, please review our [SECURITY.md](SECURITY.md) guidelines on how to report it privately. **Do not create public GitHub issues for security vulnerabilities.**
 
 ---
 
-## 📜 Code of Conduct
+##  Code of Conduct
 We want to make participation in this project a welcoming and harassment-free experience for everyone. By collaborating on this project, you agree to adhere to the Contributor Covenant [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ---
 
-## 📄 License
+##  License
 Distributed under the MIT License. See `LICENSE` for more information.

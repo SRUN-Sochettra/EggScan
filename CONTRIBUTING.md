@@ -1,4 +1,4 @@
-# 🤝 Contributing to EggScan
+#  Contributing to EggScan
 
 Thank you for your interest in contributing to EggScan! Projects like this rely on community contributions to thrive, and we appreciate your time and efforts to make EggScan better.
 
@@ -6,7 +6,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 
 ---
 
-## 📖 Table of Contents
+##  Table of Contents
 - [How Can I Contribute?](#how-can-i-contribute)
   - [Reporting Bugs](#reporting-bugs)
   - [Suggesting Features or Enhancements](#suggesting-features-or-enhancements)

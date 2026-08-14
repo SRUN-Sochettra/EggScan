@@ -31,7 +31,7 @@ public class LeaderboardBenchmark {
         // Insert dummy data
         List<ScanRecord> records = new ArrayList<>();
         for (int i = 0; i < 1000; i++) {
-            String jsonPayload = String.format("{\"id\":\"%s\",\"username\":\"user%d\",\"avatarUrl\":\"url%d\",\"name\":\"Name%d\",\"bio\":\"Bio%d\",\"eggVerdict\":\"Golden Egg\",\"eggEmoji\":\"🥚\",\"eggScore\":%d,\"firstImpression\":\"Good\",\"skills\":[\"Java\"],\"improvements\":[\"None\"],\"vibe\":\"Chill\",\"rawData\":null,\"stats\":null}", UUID.randomUUID().toString(), i, i, i, i, (i % 100));
+            String jsonPayload = String.format("{\"id\":\"%s\",\"username\":\"user%d\",\"avatarUrl\":\"url%d\",\"name\":\"Name%d\",\"bio\":\"Bio%d\",\"eggVerdict\":\"Golden Egg\",\"eggEmoji\":\"\",\"eggScore\":%d,\"firstImpression\":\"Good\",\"skills\":[\"Java\"],\"improvements\":[\"None\"],\"vibe\":\"Chill\",\"rawData\":null,\"stats\":null}", UUID.randomUUID().toString(), i, i, i, i, (i % 100));
             records.add(ScanRecord.builder()
                 .id(UUID.randomUUID().toString())
                 .username("user" + i)

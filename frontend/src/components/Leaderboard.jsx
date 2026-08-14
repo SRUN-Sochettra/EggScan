@@ -48,7 +48,7 @@ export default function Leaderboard({ onScan }) {
         onClick={handleOpen}
         className="fixed bottom-4 right-4 bg-white/80 backdrop-blur-sm border-2 border-brown-700 text-brown-700 font-bold py-2 px-4 rounded-full shadow-eggsm hover:bg-white transition-all z-50 font-display focus-visible:ring-2 focus-visible:ring-brown-500 outline-none"
       >
-        🏆 Hall of Fame
+         Hall of Fame
       </button>
 
       {isOpen && (

@@ -145,7 +145,7 @@ public class ScanService {
                 .name(data.getProfile().getName())
                 .bio(data.getProfile().getBio())
                 .eggVerdict(ai.getEggVerdict())
-                .eggEmoji(emojiFor(ai.getEggVerdict()))
+                .eggEmoji("")
                 .eggScore(ai.getEggScore())
                 .firstImpression(ai.getFirstImpression())
                 .skills(ai.getSkills())
@@ -183,17 +183,6 @@ public class ScanService {
 
     private boolean isHonestMode(String mode) {
         return "honest".equalsIgnoreCase(mode) || mode == null;
-    }
-
-    private String emojiFor(String verdict) {
-        return switch (verdict) {
-            case "Golden Egg" -> "🥚✨";
-            case "Hard Boiled" -> "🍳";
-            case "Fresh Egg" -> "🐣";
-            case "Cracked" -> "🥚💔";
-            case "Scrambled" -> "🍳💀";
-            default -> "🥚";
-        };
     }
 
     public BattleResponse battle(String username1, String username2) {

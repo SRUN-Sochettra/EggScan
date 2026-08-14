@@ -105,15 +105,13 @@ export default function StackRoast() {
           </div>
 
           <div className="card p-6 bg-[#FFFDF7]">
-            <h2 className="font-display font-bold text-xl text-brown-700 mb-4 flex items-center gap-2">
-              <span className="text-2xl">🌐</span> Top Languages Roast
+            <h2 className="font-display font-bold text-xl text-brown-700 mb-4 flex items-center gap-2"> Top Languages Roast
             </h2>
             <p className="text-brown-600 leading-relaxed">{result.topLanguagesRoast}</p>
           </div>
 
           <div className="card p-6 bg-[#FFFDF7]">
-            <h2 className="font-display font-bold text-xl text-brown-700 mb-4 flex items-center gap-2">
-              <span className="text-2xl">⚙️</span> Config Deep-Dive Roast
+            <h2 className="font-display font-bold text-xl text-brown-700 mb-4 flex items-center gap-2"> Config Deep-Dive Roast
             </h2>
             <p className="text-brown-600 leading-relaxed">{result.configDeepDiveRoast}</p>
           </div>

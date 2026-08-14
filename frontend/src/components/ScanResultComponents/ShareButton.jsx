@@ -20,7 +20,7 @@ export default function ShareButton({ data, resultRef }) {
 
     const shareUrl = data.id ? `${window.location.origin}/?id=${data.id}` : window.location.origin
 
-    return `I just got scanned on EggScan 🥚
+    return `I just got scanned on EggScan
 
 Verdict: ${data.eggVerdict} — ${tagline}
 Score: ${data.eggScore}/100
@@ -53,7 +53,7 @@ ${shareUrl}`
   }
 
   const tweetUrl = () => {
-    const tweet = `I'm a ${data.eggVerdict} on EggScan 🥚 (${data.eggScore}/100)
+    const tweet = `I'm a ${data.eggVerdict} on EggScan  (${data.eggScore}/100)
 
 Vibe: ${data.vibe}
 

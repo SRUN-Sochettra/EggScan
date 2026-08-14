@@ -1,4 +1,4 @@
-# 🛡️ Security Policy
+#  Security Policy
 
 We take security seriously at EggScan. If you discover a vulnerability, we appreciate your help in disclosing it to us in a responsible manner.
 
@@ -10,8 +10,8 @@ Currently, security updates are actively provided for the following versions:
 
 | Version | Supported |
 | :--- | :---: |
-| 1.0.x |  ✅  |
-| < 1.0.0 |  ❌  |
+| 1.0.x |    |
+| < 1.0.0 |    |
 
 ---
 

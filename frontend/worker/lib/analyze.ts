@@ -12,7 +12,6 @@ const tone = (value: string) => ({
   honest: 'Use direct, specific, recruiter-style judgment.',
 }[value] ?? 'Use direct, specific judgment.')
 
-const verdictEmoji: Record<string, string> = { 'Golden Egg': '🥚✨', 'Hard Boiled': '🍳', 'Fresh Egg': '🐣', Cracked: '🥚💔', Scrambled: '🍳💀' }
 
 export async function scan(env: Env, username: string, mode: string) {
   if (mode === 'honest') {
@@ -28,7 +27,7 @@ export async function scan(env: Env, username: string, mode: string) {
   const result = {
     id: crypto.randomUUID(), username: data.profile.login, avatarUrl: data.profile.avatar_url,
     name: data.profile.name, bio: data.profile.bio, eggVerdict: insights.eggVerdict,
-    eggEmoji: verdictEmoji[insights.eggVerdict] ?? '🥚', eggScore: insights.eggScore,
+    eggEmoji: '', eggScore: insights.eggScore,
     firstImpression: insights.firstImpression, skills: insights.skills,
     improvements: insights.improvements, vibe: insights.vibe,
     rawData: { profile: data.profile, repos: data.repos, languageBreakdown: data.languageBreakdown, totalStars: data.totalStars, activeRepos: data.activeRepos, reposWithReadme: data.reposWithReadme, lastActivity: data.lastActivity },
@@ -48,7 +47,7 @@ export async function battle(env: Env, u1: string, u2: string) {
 
 export async function deepDive(env: Env, username: string, repo: string, branch: string) {
   const evidence = await fetchRepoEvidence(env, username, repo, branch)
-  return groqJson(env, 'Perform a senior-engineer repository review. Return JSON with summary, architectureAndStack, codeStructureFeedback, commitQualityFeedback, and actionableImprovements. Do not claim to have inspected anything outside the supplied evidence.', evidence, DeepDiveSchema)
+  return groqJson(env, 'Perform a senior-engineer repository review. Return one JSON object with exactly these fields: summary (string), architectureAndStack (string), codeStructureFeedback (string), commitQualityFeedback (string), and actionableImprovements (array of strings; use an empty array when none). Do not claim to have inspected anything outside the supplied evidence.', evidence, DeepDiveSchema)
 }
 
 export async function shameCommits(env: Env, username: string, repo: string | undefined, selectedTone: string) {

@@ -39,5 +39,5 @@ export const DeepDiveSchema = z.object({
   architectureAndStack: z.string().min(1).max(1800),
   codeStructureFeedback: z.string().min(1).max(1800),
   commitQualityFeedback: z.string().min(1).max(1800),
-  actionableImprovements: z.array(z.string().max(500)).max(8),
+  actionableImprovements: z.array(z.string().min(1).max(500)).max(8).default([]),
 })

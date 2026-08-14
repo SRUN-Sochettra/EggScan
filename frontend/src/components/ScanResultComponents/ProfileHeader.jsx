@@ -18,7 +18,7 @@ export default function ProfileHeader({ data }) {
           rel="noreferrer"
           className="text-sm text-brown-400 hover:text-brown-600 font-medium"
         >
-          @{data.username} ↗
+          @{data.username}
         </a>
 
         {data.bio && (

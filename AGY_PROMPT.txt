@@ -1,0 +1,16 @@
+You are the execution agent in the local EggScan repository. Copilot has already authored the fix package. Do not redesign or rewrite the solution.
+
+1. Extract eggscan-fix.zip at the repository root, preserving paths and overwriting matching files.
+2. Inspect `git diff` and confirm only the files listed in `FIX_MANIFEST.txt` changed. Do not apply anything under `graft/`.
+3. From `frontend/`, run:
+   - `npm install` only if dependencies are missing; otherwise do not change dependency versions.
+   - `npm run check:emoji`
+   - `npm run typecheck`
+   - `npm test -- --run`
+   - `npm run build`
+4. From `backend/`, run `mvn test`.
+5. Search the entire tracked project for remaining Unicode emoji/pictographs, excluding generated `frontend/worker-configuration.d.ts`, dependency/build directories, `.git/`, and `graft/`. Report exact file:line for any match. Do not replace ordinary text symbols such as the star rating glyph, close mark, or external-link arrow unless the emoji scan classifies them as emoji.
+6. If any test/build fails, return the full raw error and the relevant file contents. Do not invent a fix or make unrelated edits.
+7. If all checks pass, deploy with the repository's existing Cloudflare command (`npm run deploy` from `frontend/`) and return the complete deployment output and final public URL. Do not change the hostname, routes, Wrangler project name, secrets, or Cloudflare configuration.
+
+Return: Changed, Verified, Remaining risks, Deployment result.

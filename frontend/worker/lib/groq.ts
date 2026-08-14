@@ -25,18 +25,33 @@ function parseJsonObject(content: unknown): unknown {
 }
 
 async function requestGroq(env: Env, messages: Array<{ role: 'system' | 'user'; content: string }>) {
-  const response = await fetchJson<any>('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: env.GROQ_MODEL,
-      temperature: 0.2,
-      max_tokens: MAX_OUTPUT_TOKENS,
-      response_format: { type: 'json_object' },
-      messages,
-    }),
-  }, 65_000)
-  return response?.choices?.[0]?.message?.content
+  try {
+    const response = await fetchJson<any>('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: env.GROQ_MODEL,
+        temperature: 0.2,
+        max_tokens: MAX_OUTPUT_TOKENS,
+        response_format: { type: 'json_object' },
+        messages,
+      }),
+    }, 65_000)
+    return response?.choices?.[0]?.message?.content
+  } catch (error) {
+    if (
+      error instanceof AppError &&
+      error.status === 429 &&
+      error.code === 'UPSTREAM_RATE_LIMITED'
+    ) {
+      throw new AppError(
+        429,
+        'UPSTREAM_RATE_LIMITED',
+        'The AI service is temporarily rate limited. Please wait and try again.',
+      )
+    }
+    throw error
+  }
 }
 
 export async function groqJson<T>(
@@ -73,6 +88,7 @@ export async function groqJson<T>(
         .map((issue) => `${issue.path.join('.') || 'root'}: ${issue.message}`)
         .join('; ')
     } catch (error) {
+      if (error instanceof AppError) throw error
       validationSummary = error instanceof Error ? error.message : 'Unknown validation error'
     }
   }

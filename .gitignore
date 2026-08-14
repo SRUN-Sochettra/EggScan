@@ -82,6 +82,7 @@ backend/mvnw.cmd
 # -------------------------------------------------------------------------
 # Frontend - JavaScript / Node (React / Vite)
 # -------------------------------------------------------------------------
+node_modules/
 frontend/node_modules/
 frontend/dist/
 frontend/build/
@@ -111,3 +112,6 @@ logs/
 tmp/
 temp/
 repomix-output.xml
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+graft/

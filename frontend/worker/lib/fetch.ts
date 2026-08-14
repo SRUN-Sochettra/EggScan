@@ -6,6 +6,9 @@ export async function fetchJson<T>(url: string, init: RequestInit, timeoutMs = 1
   try {
     const response = await fetch(url, { ...init, signal: controller.signal })
     if (!response.ok) {
+      if (response.status === 429) {
+        throw new AppError(429, 'UPSTREAM_RATE_LIMITED', 'An upstream service is temporarily rate limited. Please wait and try again.')
+      }
       const status = response.status === 404 ? 404 : 502
       throw new AppError(status, 'UPSTREAM_ERROR', `An upstream service returned HTTP ${response.status}.`)
     }

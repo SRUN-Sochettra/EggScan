@@ -110,3 +110,4 @@ logs/
 # Temporary files
 tmp/
 temp/
+repomix-output.xml

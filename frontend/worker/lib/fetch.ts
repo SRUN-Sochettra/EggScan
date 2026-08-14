@@ -1,0 +1,22 @@
+import { AppError } from './errors'
+
+export async function fetchJson<T>(url: string, init: RequestInit, timeoutMs = 12_000): Promise<T> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const response = await fetch(url, { ...init, signal: controller.signal })
+    if (!response.ok) {
+      const status = response.status === 404 ? 404 : 502
+      throw new AppError(status, 'UPSTREAM_ERROR', `An upstream service returned HTTP ${response.status}.`)
+    }
+    return await response.json<T>()
+  } catch (error) {
+    if (error instanceof AppError) throw error
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new AppError(503, 'UPSTREAM_TIMEOUT', 'An upstream service took too long to respond.')
+    }
+    throw new AppError(502, 'UPSTREAM_UNAVAILABLE', 'An upstream service could not be reached.')
+  } finally {
+    clearTimeout(timer)
+  }
+}

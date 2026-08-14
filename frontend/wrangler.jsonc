@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "eggscan",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-08-14",
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "eggscan",
+      "database_id": "3d238b81-ae6d-4bac-8d1e-80717fd47b63",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "GROQ_MODEL": "llama-3.1-8b-instant"
+  },
+  "observability": { "enabled": true }
+}

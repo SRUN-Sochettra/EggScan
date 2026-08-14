@@ -1,19 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { scanGithub, battleGithub, getLeaderboard, getScanResult } from './eggscan.js';
+import { scanGithub, battleGithub, getLeaderboard, getScanResult, deepDiveRepo } from './eggscan.js';
 
-const BASE = 'http://localhost:8080';
+const BASE = '';
 
-import { deepDiveRepo } from "./eggscan.js"
+beforeEach(() => {
+  global.fetch = vi.fn();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('eggscan API', () => {
-  beforeEach(() => {
-    global.fetch = vi.fn();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   describe('scanGithub', () => {
     it('fetches successfully and returns json', async () => {
       const mockData = { id: 1, result: 'success' };
@@ -187,37 +185,37 @@ describe('eggscan API', () => {
   });
 });
 
-  describe('deepDiveRepo', () => {
-    it('returns json when response is ok with default branch', async () => {
-      const mockData = { summary: 'Repo summary' }
-      fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockData,
-      })
+describe('deepDiveRepo', () => {
+  it('returns json when response is ok with default branch', async () => {
+    const mockData = { summary: 'Repo summary' };
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockData,
+    });
 
-      const result = await deepDiveRepo('testuser', 'testrepo')
-      expect(result).toEqual(mockData)
-      expect(fetch).toHaveBeenCalledWith('http://localhost:8080/api/scan/testuser/repo/testrepo?defaultBranch=main')
-    })
+    const result = await deepDiveRepo('testuser', 'testrepo');
+    expect(result).toEqual(mockData);
+    expect(fetch).toHaveBeenCalledWith(`${BASE}/api/scan/testuser/repo/testrepo?defaultBranch=main`);
+  });
 
-    it('returns json when response is ok with custom branch', async () => {
-      const mockData = { summary: 'Repo summary' }
-      fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockData,
-      })
+  it('returns json when response is ok with custom branch', async () => {
+    const mockData = { summary: 'Repo summary' };
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockData,
+    });
 
-      const result = await deepDiveRepo('testuser', 'testrepo', 'develop')
-      expect(result).toEqual(mockData)
-      expect(fetch).toHaveBeenCalledWith('http://localhost:8080/api/scan/testuser/repo/testrepo?defaultBranch=develop')
-    })
+    const result = await deepDiveRepo('testuser', 'testrepo', 'develop');
+    expect(result).toEqual(mockData);
+    expect(fetch).toHaveBeenCalledWith(`${BASE}/api/scan/testuser/repo/testrepo?defaultBranch=develop`);
+  });
 
-    it('throws error when response is not ok', async () => {
-      fetch.mockResolvedValueOnce({
-        ok: false,
-        json: async () => ({ error: 'Deep dive failed' }),
-      })
+  it('throws error when response is not ok', async () => {
+    fetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ error: 'Deep dive failed' }),
+    });
 
-      await expect(deepDiveRepo('testuser', 'testrepo')).rejects.toThrow('Deep dive failed')
-    })
-  })
+    await expect(deepDiveRepo('testuser', 'testrepo')).rejects.toThrow('Deep dive failed');
+  });
+});

@@ -32,7 +32,24 @@ Add secrets:
 ```bash
 npx wrangler secret put GITHUB_TOKEN
 npx wrangler secret put GROQ_API_KEY
+npx wrangler secret put GEMINI_API_KEY
+npx wrangler secret put CEREBRAS_API_KEY
+npx wrangler secret put NVIDIA_API_KEY
+npx wrangler secret put OPENROUTER_API_KEY
 ```
+
+Configure AI Providers and Fallback Chain:
+1. **Groq** (Primary, `GROQ_MODEL`: `llama-3.1-8b-instant`, configured via `GROQ_API_KEY`)
+2. **Google Gemini** (`GEMINI_MODEL`: `gemini-2.5-flash`, configured via `GEMINI_API_KEY`)
+3. **Cerebras** (`CEREBRAS_MODEL`: `llama3.1-8b`, configured via `CEREBRAS_API_KEY`)
+4. **NVIDIA NIM** (`NVIDIA_MODEL`: `meta/llama-3.1-8b-instruct`, configured via `NVIDIA_API_KEY`)
+5. **OpenRouter Free Router** (`OPENROUTER_MODEL`: `openrouter/free`, configured via `OPENROUTER_API_KEY`)
+6. **Cloudflare Workers AI** (`WORKERS_AI_MODEL`: `@cf/meta/llama-3.1-8b-instruct-fp8`, via `"ai": { "binding": "AI" }`)
+
+*Privacy Notice*: Repository evidence (sanitized metadata, commit messages, and readmes) may be transmitted to each fallback provider in the configured chain when upstream providers fail or rate limit. Never log or store raw secrets or client tokens.
+
+- Regenerate binding types: `npm run cf-typegen`
+
 
 Apply the database migration:
 

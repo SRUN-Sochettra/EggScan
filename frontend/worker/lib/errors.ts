@@ -2,7 +2,7 @@ import type { Context } from 'hono'
 
 export class AppError extends Error {
   constructor(
-    public readonly status: 400 | 404 | 429 | 502 | 503,
+    public readonly status: 400 | 401 | 403 | 404 | 429 | 500 | 502 | 503,
     public readonly code: string,
     message: string,
   ) {

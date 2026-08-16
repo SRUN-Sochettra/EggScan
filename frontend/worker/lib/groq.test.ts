@@ -2,20 +2,37 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { z } from 'zod'
 import { groqJson } from './groq'
 import { AppError } from './errors'
+import { resetAllCircuits } from './ai/circuit-breaker'
 import type { Env } from '../types'
 
-describe('groqJson', () => {
-  const fakeEnv = {
-    GROQ_API_KEY: 'test-api-key',
-    GROQ_MODEL: 'test-model',
-  } as Env
+describe('Multi-Provider AI Fallback Pipeline', () => {
+  let fakeAi: { run: ReturnType<typeof vi.fn> }
+  let fakeEnv: Env
 
   const TestSchema = z.object({
     answer: z.string(),
   })
 
   beforeEach(() => {
+    resetAllCircuits()
     vi.stubGlobal('fetch', vi.fn())
+    fakeAi = {
+      run: vi.fn(),
+    }
+    fakeEnv = {
+      GROQ_API_KEY: 'test-groq-key',
+      GROQ_MODEL: 'llama-3.1-8b-instant',
+      GEMINI_API_KEY: 'test-gemini-key',
+      GEMINI_MODEL: 'gemini-2.5-flash',
+      CEREBRAS_API_KEY: 'test-cerebras-key',
+      CEREBRAS_MODEL: 'llama3.1-8b',
+      NVIDIA_API_KEY: 'test-nvidia-key',
+      NVIDIA_MODEL: 'meta/llama-3.1-8b-instruct',
+      OPENROUTER_API_KEY: 'test-openrouter-key',
+      OPENROUTER_MODEL: 'openrouter/free',
+      WORKERS_AI_MODEL: '@cf/meta/llama-3.1-8b-instruct-fp8',
+      AI: fakeAi as unknown as Ai,
+    } as Env
   })
 
   afterEach(() => {
@@ -23,100 +40,290 @@ describe('groqJson', () => {
     vi.unstubAllGlobals()
   })
 
-  it('translates generic 429 into AI-specific rate limit AppError and does not retry', async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: false,
-      status: 429,
-    } as Response)
+  it('1. Groq success calls no fallback (Groq: 1, others: 0)', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            choices: [{ message: { content: JSON.stringify({ answer: 'groq-success' }) } }],
+          }),
+        } as unknown as Response
+      }
+      return { ok: false, status: 404 } as Response
+    })
+
+    const result = await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
+    expect(result).toEqual({ answer: 'groq-success' })
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(fakeAi.run).not.toHaveBeenCalled()
+  })
+
+  it('2. Groq retryable failure -> Gemini success', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) {
+        return { ok: false, status: 429 } as Response
+      }
+      if (urlStr.includes('generativelanguage.googleapis.com')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            candidates: [
+              { content: { parts: [{ text: JSON.stringify({ answer: 'gemini-success' }) }] } },
+            ],
+          }),
+        } as unknown as Response
+      }
+      return { ok: false, status: 404 } as Response
+    })
+
+    const result = await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
+    expect(result).toEqual({ answer: 'gemini-success' })
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(fakeAi.run).not.toHaveBeenCalled()
+  })
+
+  it('3. Gemini retryable failure -> Cerebras success', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('generativelanguage.googleapis.com')) return { ok: false, status: 503 } as Response
+      if (urlStr.includes('api.cerebras.ai')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            choices: [{ message: { content: JSON.stringify({ answer: 'cerebras-success' }) } }],
+          }),
+        } as unknown as Response
+      }
+      return { ok: false, status: 404 } as Response
+    })
+
+    const result = await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
+    expect(result).toEqual({ answer: 'cerebras-success' })
+    expect(fetch).toHaveBeenCalledTimes(3)
+    expect(fakeAi.run).not.toHaveBeenCalled()
+  })
+
+  it('4. Cerebras retryable failure -> NVIDIA success', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('generativelanguage.googleapis.com')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('api.cerebras.ai')) return { ok: false, status: 500 } as Response
+      if (urlStr.includes('integrate.api.nvidia.com')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            choices: [{ message: { content: JSON.stringify({ answer: 'nvidia-success' }) } }],
+          }),
+        } as unknown as Response
+      }
+      return { ok: false, status: 404 } as Response
+    })
+
+    const result = await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
+    expect(result).toEqual({ answer: 'nvidia-success' })
+    expect(fetch).toHaveBeenCalledTimes(4)
+    expect(fakeAi.run).not.toHaveBeenCalled()
+  })
+
+  it('5. NVIDIA retryable failure -> OpenRouter success', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('generativelanguage.googleapis.com')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('api.cerebras.ai')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('integrate.api.nvidia.com')) return { ok: false, status: 502 } as Response
+      if (urlStr.includes('openrouter.ai')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            choices: [{ message: { content: JSON.stringify({ answer: 'openrouter-success' }) } }],
+          }),
+        } as unknown as Response
+      }
+      return { ok: false, status: 404 } as Response
+    })
+
+    const result = await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
+    expect(result).toEqual({ answer: 'openrouter-success' })
+    expect(fetch).toHaveBeenCalledTimes(5)
+    expect(fakeAi.run).not.toHaveBeenCalled()
+  })
+
+  it('6. OpenRouter retryable failure -> Workers AI success', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('generativelanguage.googleapis.com')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('api.cerebras.ai')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('integrate.api.nvidia.com')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('openrouter.ai')) return { ok: false, status: 429 } as Response
+      return { ok: false, status: 404 } as Response
+    })
+
+    fakeAi.run.mockResolvedValueOnce({
+      response: JSON.stringify({ answer: 'workers-ai-final-fallback' }),
+    })
+
+    const result = await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
+    expect(result).toEqual({ answer: 'workers-ai-final-fallback' })
+    expect(fetch).toHaveBeenCalledTimes(5)
+    expect(fakeAi.run).toHaveBeenCalledTimes(1)
+  })
+
+  it('7. Missing optional provider keys skip those providers without failure', async () => {
+    const envWithoutOptionalKeys: Env = {
+      ...fakeEnv,
+      GEMINI_API_KEY: undefined,
+      CEREBRAS_API_KEY: undefined,
+      NVIDIA_API_KEY: undefined,
+      OPENROUTER_API_KEY: undefined,
+    }
+
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) return { ok: false, status: 429 } as Response
+      return { ok: false, status: 404 } as Response
+    })
+
+    fakeAi.run.mockResolvedValueOnce({
+      response: JSON.stringify({ answer: 'direct-to-workers-ai' }),
+    })
+
+    const result = await groqJson(envWithoutOptionalKeys, 'System prompt', { some: 'evidence' }, TestSchema)
+    expect(result).toEqual({ answer: 'direct-to-workers-ai' })
+    // Only Groq was called over HTTP, unconfigured providers were skipped
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(fakeAi.run).toHaveBeenCalledTimes(1)
+  })
+
+  it('8. Non-retryable 401 auth error stops chain safely without fallback loop', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) return { ok: false, status: 401 } as Response
+      return { ok: false, status: 404 } as Response
+    })
 
     try {
       await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
       expect.unreachable('Should have thrown')
     } catch (error) {
       expect(error).toBeInstanceOf(AppError)
-      const appError = error as AppError
-      expect(appError.status).toBe(429)
-      expect(appError.code).toBe('UPSTREAM_RATE_LIMITED')
-      expect(appError.message).toBe('The AI service is temporarily rate limited. Please wait and try again.')
+      expect((error as AppError).code).toBe('AI_AUTH_ERROR')
     }
 
     expect(fetch).toHaveBeenCalledTimes(1)
+    expect(fakeAi.run).not.toHaveBeenCalled()
   })
 
-  it('does not retry when another AppError occurs on the Groq request path', async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: false,
-      status: 500,
-    } as Response)
-
-    try {
-      await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
-      expect.unreachable('Should have thrown')
-    } catch (error) {
-      expect(error).toBeInstanceOf(AppError)
-      const appError = error as AppError
-      expect(appError.status).toBe(502)
-      expect(appError.code).toBe('UPSTREAM_ERROR')
-      expect(appError.message).toBe('An upstream service returned HTTP 500.')
-    }
-
-    expect(fetch).toHaveBeenCalledTimes(1)
-  })
-
-  it('retries when JSON is invalid inside the Groq envelope and succeeds on the second attempt', async () => {
-    vi.mocked(fetch)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          choices: [{ message: { content: 'not valid json text' } }],
-        }),
-      } as unknown as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          choices: [{ message: { content: JSON.stringify({ answer: 'recovered' }) } }],
-        }),
-      } as unknown as Response)
+  it('9. Invalid JSON gets exactly one correction request (total 2 attempts)', async () => {
+    let groqAttempts = 0
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) {
+        groqAttempts += 1
+        if (groqAttempts === 1) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ choices: [{ message: { content: 'not valid json at all' } }] }),
+          } as unknown as Response
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ choices: [{ message: { content: JSON.stringify({ answer: 'corrected-json' }) } }] }),
+        } as unknown as Response
+      }
+      return { ok: false, status: 404 } as Response
+    })
 
     const result = await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
-    expect(result).toEqual({ answer: 'recovered' })
+    expect(result).toEqual({ answer: 'corrected-json' })
+    expect(groqAttempts).toBe(2)
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(fakeAi.run).not.toHaveBeenCalled()
+  })
+
+  it('10. Schema-invalid output gets exactly one correction request', async () => {
+    let geminiAttempts = 0
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('generativelanguage.googleapis.com')) {
+        geminiAttempts += 1
+        if (geminiAttempts === 1) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              candidates: [{ content: { parts: [{ text: JSON.stringify({ wrongField: 'missing-answer' }) }] } }],
+            }),
+          } as unknown as Response
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            candidates: [{ content: { parts: [{ text: JSON.stringify({ answer: 'schema-corrected' }) }] } }],
+          }),
+        } as unknown as Response
+      }
+      return { ok: false, status: 404 } as Response
+    })
+
+    const result = await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
+    expect(result).toEqual({ answer: 'schema-corrected' })
+    expect(geminiAttempts).toBe(2)
+    expect(fetch).toHaveBeenCalledTimes(3) // 1 Groq + 2 Gemini
+    expect(fakeAi.run).not.toHaveBeenCalled()
+  })
+
+  it('11. 429/timeout/5xx does not retry the same provider (fails over immediately)', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('generativelanguage.googleapis.com')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            candidates: [{ content: { parts: [{ text: JSON.stringify({ answer: 'immediate-failover' }) }] } }],
+          }),
+        } as unknown as Response
+      }
+      return { ok: false, status: 404 } as Response
+    })
+
+    const result = await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
+    expect(result).toEqual({ answer: 'immediate-failover' })
+    // Groq was attempted exactly once before failover
     expect(fetch).toHaveBeenCalledTimes(2)
   })
 
-  it('retries when Zod schema validation fails and succeeds on the second attempt', async () => {
-    vi.mocked(fetch)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          choices: [{ message: { content: JSON.stringify({ wrongField: 123 }) } }],
-        }),
-      } as unknown as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          choices: [{ message: { content: JSON.stringify({ answer: 'valid answer' }) } }],
-        }),
-      } as unknown as Response)
+  it('12. Every provider failing returns the existing sanitized 502 contract', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('generativelanguage.googleapis.com')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('api.cerebras.ai')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('integrate.api.nvidia.com')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('openrouter.ai')) return { ok: false, status: 429 } as Response
+      return { ok: false, status: 404 } as Response
+    })
 
-    const result = await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
-    expect(result).toEqual({ answer: 'valid answer' })
-    expect(fetch).toHaveBeenCalledTimes(2)
-  })
-
-  it('throws AppError with status 502 and INVALID_AI_RESPONSE if content validation fails twice', async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        choices: [{ message: { content: 'invalid json content' } }],
-      }),
-    } as unknown as Response)
-
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    fakeAi.run.mockResolvedValue({
+      response: 'invalid json from workers ai',
+    })
 
     try {
       await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
@@ -129,10 +336,116 @@ describe('groqJson', () => {
       expect(appError.message).toBe('Repository analysis is temporarily unavailable. Please try again.')
     }
 
-    expect(fetch).toHaveBeenCalledTimes(2)
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'AI result validation failed after retry',
-      expect.objectContaining({ validationSummary: expect.any(String) }),
-    )
+    expect(fetch).toHaveBeenCalledTimes(5) // 1 Groq + 1 Gemini + 1 Cerebras + 1 Nvidia + 1 OpenRouter
+    expect(fakeAi.run).toHaveBeenCalledTimes(2) // Workers AI initial + 1 correction
+  })
+
+  it('13. Total call counts remain bounded across the whole pipeline', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('generativelanguage.googleapis.com')) return { ok: false, status: 503 } as Response
+      if (urlStr.includes('api.cerebras.ai')) return { ok: false, status: 502 } as Response
+      if (urlStr.includes('integrate.api.nvidia.com')) return { ok: false, status: 500 } as Response
+      if (urlStr.includes('openrouter.ai')) return { ok: false, status: 429 } as Response
+      return { ok: false, status: 404 } as Response
+    })
+
+    fakeAi.run.mockResolvedValueOnce({
+      response: JSON.stringify({ answer: 'bounded-ok' }),
+    })
+
+    const result = await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
+    expect(result).toEqual({ answer: 'bounded-ok' })
+    expect(fetch).toHaveBeenCalledTimes(5)
+    expect(fakeAi.run).toHaveBeenCalledTimes(1)
+  })
+
+  it('14. Circuit-open provider is skipped without HTTP invocation', async () => {
+    // Fail Groq 3 times to trip circuit breaker
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) return { ok: false, status: 429 } as Response
+      if (urlStr.includes('generativelanguage.googleapis.com')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            candidates: [{ content: { parts: [{ text: JSON.stringify({ answer: 'gemini-backup' }) }] } }],
+          }),
+        } as unknown as Response
+      }
+      return { ok: false, status: 404 } as Response
+    })
+
+    // Call 1: Groq fails (1), Gemini succeeds
+    await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
+    // Call 2: Groq fails (2), Gemini succeeds
+    await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
+    // Call 3: Groq fails (3 -> circuit opens), Gemini succeeds
+    await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
+
+    expect(fetch).toHaveBeenCalledTimes(6) // 3 Groq + 3 Gemini
+
+    // Call 4: Groq circuit is OPEN -> Groq should be skipped entirely!
+    const result = await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
+    expect(result).toEqual({ answer: 'gemini-backup' })
+    // Groq was NOT called on 4th execution, only Gemini was called!
+    expect(fetch).toHaveBeenCalledTimes(7) // 6 previous + 1 Gemini
+  })
+
+  it('15. Prompts, evidence and secrets never appear in logs', async () => {
+    const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const secretEvidence = { secretPayload: 'SUPER_SECRET_REPO_DATA_XYZ_123' }
+
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            choices: [{ message: { content: JSON.stringify({ answer: 'safe-logged' }) } }],
+          }),
+        } as unknown as Response
+      }
+      return { ok: false, status: 404 } as Response
+    })
+
+    await groqJson(fakeEnv, 'Secret System Prompt ABC', secretEvidence, TestSchema)
+
+    const allLogs = [
+      ...consoleInfoSpy.mock.calls,
+      ...consoleWarnSpy.mock.calls,
+      ...consoleErrorSpy.mock.calls,
+    ].flat()
+
+    const serializedLogs = JSON.stringify(allLogs)
+    expect(serializedLogs).not.toContain('SUPER_SECRET_REPO_DATA_XYZ_123')
+    expect(serializedLogs).not.toContain('Secret System Prompt ABC')
+    expect(serializedLogs).not.toContain('test-groq-key')
+    expect(serializedLogs).not.toContain('Bearer')
+  })
+
+  it('16. Strips emojis from output across all providers', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      const urlStr = String(url)
+      if (urlStr.includes('api.groq.com')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            choices: [{ message: { content: JSON.stringify({ answer: 'Groq \uD83E\uDD5A Result \uD83D\uDE80' }) } }],
+          }),
+        } as unknown as Response
+      }
+      return { ok: false, status: 404 } as Response
+    })
+
+    const result = await groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)
+    expect(result).toEqual({ answer: 'Groq Result' })
   })
 })

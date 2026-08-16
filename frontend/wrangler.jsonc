@@ -15,8 +15,16 @@
       "migrations_dir": "migrations"
     }
   ],
+  "ai": {
+    "binding": "AI"
+  },
   "vars": {
-    "GROQ_MODEL": "llama-3.1-8b-instant"
+    "GROQ_MODEL": "llama-3.1-8b-instant",
+    "GEMINI_MODEL": "gemini-2.5-flash",
+    "CEREBRAS_MODEL": "llama3.1-8b",
+    "NVIDIA_MODEL": "meta/llama-3.1-8b-instruct",
+    "OPENROUTER_MODEL": "openrouter/free",
+    "WORKERS_AI_MODEL": "@cf/meta/llama-3.1-8b-instruct-fp8"
   },
   "observability": { "enabled": true }
 }

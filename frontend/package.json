@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run check:emoji && vite build && npm run check:dist-secrets",
+    "build": "npm run check:emoji && vite build && npm run check:dist-assets && npm run check:dist-secrets",
     "check:emoji": "node scripts/assert-no-emojis.mjs",
+    "check:dist-assets": "node scripts/assert-production-assets.mjs",
     "check:dist-secrets": "node scripts/assert-no-secrets-in-dist.mjs",
     "deploy": "npm run build && wrangler deploy",
     "cf-typegen": "wrangler types",

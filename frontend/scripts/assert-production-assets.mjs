@@ -38,6 +38,11 @@ if (!existsSync(htmlPath)) {
 
 const html = readFileSync(htmlPath, 'utf8')
 
+const buildMarkerMatch = html.match(/<meta\s+name=["']eggscan-build["']\s+content=["']([^"']+)["'][^>]*>/i)
+if (!buildMarkerMatch?.[1] || !/^[0-9a-f]{12}-\d{8}T\d{6}Z$/i.test(buildMarkerMatch[1])) {
+  throw new Error('Production asset check failed: generated HTML is missing a valid eggscan-build marker.')
+}
+
 if (/\/src\/main\.jsx/i.test(html) || /(?:src|href)=["'][^"']*\.jsx(?:["']|\?)/i.test(html)) {
   throw new Error('Production asset check failed: deployed HTML references a JSX source module.')
 }
@@ -57,4 +62,4 @@ if (!moduleAsset.trim() || /\bfrom\s+['"][^'"]+\.(?:jsx|tsx)['"]/i.test(moduleAs
   throw new Error('Production asset check failed: referenced JavaScript asset is empty or contains source JSX imports.')
 }
 
-console.log(`Production asset check passed: ${htmlPath} references ${moduleAssetMatch[1]} via generated Wrangler config ${generatedWranglerPath}.`)
+console.log(`Production asset check passed: ${htmlPath} marker=${buildMarkerMatch[1]} references ${moduleAssetMatch[1]} via generated Wrangler config ${generatedWranglerPath}.`)

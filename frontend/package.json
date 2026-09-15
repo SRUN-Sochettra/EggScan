@@ -9,7 +9,7 @@
     "check:emoji": "node scripts/assert-no-emojis.mjs",
     "check:dist-assets": "node scripts/assert-production-assets.mjs",
     "check:dist-secrets": "node scripts/assert-no-secrets-in-dist.mjs",
-    "deploy": "npm run build && wrangler deploy",
+    "deploy": "npm run build && wrangler deploy --config wrangler.jsonc",
     "cf-typegen": "wrangler types",
     "db:migrate:local": "wrangler d1 migrations apply eggscan --local",
     "db:migrate:remote": "wrangler d1 migrations apply eggscan --remote",

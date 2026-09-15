@@ -4,15 +4,32 @@ import { fileURLToPath } from 'node:url'
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url))
 const frontendDirectory = resolve(scriptDirectory, '..')
-const wranglerPath = resolve(frontendDirectory, 'wrangler.jsonc')
-const wranglerSource = readFileSync(wranglerPath, 'utf8')
-const assetDirectoryMatch = wranglerSource.match(/"assets"\s*:\s*\{[\s\S]*?"directory"\s*:\s*"([^"]+)"/)
+const sourceWranglerPath = resolve(frontendDirectory, 'wrangler.jsonc')
+const generatedWranglerPath = resolve(frontendDirectory, 'dist/eggscan/wrangler.json')
+const sourceWrangler = readFileSync(sourceWranglerPath, 'utf8')
 
-if (!assetDirectoryMatch) {
-  throw new Error('Production asset check failed: Wrangler assets.directory is missing.')
+if (!existsSync(generatedWranglerPath)) {
+  throw new Error('Production asset check failed: Vite did not generate dist/eggscan/wrangler.json.')
 }
 
-const assetDirectory = resolve(frontendDirectory, assetDirectoryMatch[1])
+const generatedWrangler = JSON.parse(readFileSync(generatedWranglerPath, 'utf8'))
+const configuredAssetDirectory = generatedWrangler.assets?.directory
+if (typeof configuredAssetDirectory !== 'string' || !configuredAssetDirectory) {
+  throw new Error('Production asset check failed: generated Wrangler assets.directory is missing.')
+}
+
+const sourceAssetDirectoryMatch = sourceWrangler.match(/"assets"\s*:\s*\{[\s\S]*?"directory"\s*:\s*"([^"]+)"/)
+if (!sourceAssetDirectoryMatch) {
+  throw new Error('Production asset check failed: source Wrangler assets.directory is missing.')
+}
+
+const expectedAssetDirectory = resolve(frontendDirectory, sourceAssetDirectoryMatch[1])
+const generatedAssetDirectory = resolve(dirname(generatedWranglerPath), configuredAssetDirectory)
+if (generatedAssetDirectory !== expectedAssetDirectory) {
+  throw new Error(`Production asset check failed: generated Wrangler assets.directory resolves to ${generatedAssetDirectory}, expected ${expectedAssetDirectory}.`)
+}
+
+const assetDirectory = generatedAssetDirectory
 const htmlPath = resolve(assetDirectory, 'index.html')
 
 if (!existsSync(htmlPath)) {
@@ -22,12 +39,12 @@ if (!existsSync(htmlPath)) {
 const html = readFileSync(htmlPath, 'utf8')
 
 if (/\/src\/main\.jsx/i.test(html) || /(?:src|href)=["'][^"']*\.jsx(?:["']|\?)/i.test(html)) {
-  throw new Error('Production asset check failed: dist/index.html references a JSX source module.')
+  throw new Error('Production asset check failed: deployed HTML references a JSX source module.')
 }
 
 const moduleAssetMatch = html.match(/<script\s+[^>]*type=["']module["'][^>]*src=["']([^"']+)["']/i)
 if (!moduleAssetMatch || !moduleAssetMatch[1].startsWith('/assets/') || extname(moduleAssetMatch[1]) !== '.js') {
-  throw new Error('Production asset check failed: compiled /assets/*.js module is missing from dist/index.html.')
+  throw new Error('Production asset check failed: compiled /assets/*.js module is missing from deployed HTML.')
 }
 
 const moduleAssetPath = resolve(assetDirectory, moduleAssetMatch[1].replace(/^\//, ''))
@@ -40,4 +57,4 @@ if (!moduleAsset.trim() || /\bfrom\s+['"][^'"]+\.(?:jsx|tsx)['"]/i.test(moduleAs
   throw new Error('Production asset check failed: referenced JavaScript asset is empty or contains source JSX imports.')
 }
 
-console.log(`Production asset check passed: ${htmlPath} references ${moduleAssetMatch[1]}.`)
+console.log(`Production asset check passed: ${htmlPath} references ${moduleAssetMatch[1]} via generated Wrangler config ${generatedWranglerPath}.`)

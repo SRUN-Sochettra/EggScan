@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process'
-import { existsSync, readdirSync, unlinkSync } from 'node:fs'
+import { copyFileSync, existsSync, readdirSync, unlinkSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { cloudflare } from '@cloudflare/vite-plugin'
 import react from '@vitejs/plugin-react'
@@ -11,8 +11,7 @@ function buildMarker() {
   return `${commit}-${timestamp}`
 }
 
-function injectBuildMarker() {
-  const marker = buildMarker()
+function injectBuildMarker(marker) {
   return {
     name: 'inject-build-marker',
     transformIndexHtml: {
@@ -20,6 +19,18 @@ function injectBuildMarker() {
       handler(html) {
         return html.replace('</head>', `    <meta name="eggscan-build" content="${marker}" />\n  </head>`)
       },
+    },
+  }
+}
+
+function copyBuildHtml(marker) {
+  return {
+    name: 'copy-build-html',
+    apply: 'build',
+    closeBundle() {
+      const clientDirectory = resolve(process.cwd(), 'dist/client')
+      const indexPath = resolve(clientDirectory, 'index.html')
+      if (existsSync(indexPath)) copyFileSync(indexPath, resolve(clientDirectory, `eggscan-${marker}`))
     },
   }
 }
@@ -57,16 +68,23 @@ function stripDevVars() {
   }
 }
 
-export default defineConfig(({ mode }) => ({
-  plugins: [
-    react(),
-    ...(mode === 'test' ? [] : [injectBuildMarker()]),
-    ...(mode === 'test' ? [] : [cloudflare()]),
-    stripDevVars(),
-  ],
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: './src/setupTests.js',
-  },
-}))
+export default defineConfig(({ mode }) => {
+  const marker = buildMarker()
+  return {
+    define: {
+      __EGGSCAN_BUILD_MARKER__: JSON.stringify(marker),
+    },
+    plugins: [
+      react(),
+      ...(mode === 'test' ? [] : [injectBuildMarker(marker)]),
+      ...(mode === 'test' ? [] : [cloudflare()]),
+      ...(mode === 'test' ? [] : [copyBuildHtml(marker)]),
+      stripDevVars(),
+    ],
+    test: {
+      environment: 'jsdom',
+      globals: true,
+      setupFiles: './src/setupTests.js',
+    },
+  }
+})

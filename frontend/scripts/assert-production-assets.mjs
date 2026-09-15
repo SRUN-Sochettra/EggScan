@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, extname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -31,9 +31,14 @@ if (generatedAssetDirectory !== expectedAssetDirectory) {
 
 const assetDirectory = generatedAssetDirectory
 const htmlPath = resolve(assetDirectory, 'index.html')
+const buildHtmlFiles = readdirSync(assetDirectory).filter((fileName) => /^eggscan-[0-9a-f]{12}-\d{8}T\d{6}Z$/i.test(fileName))
 
 if (!existsSync(htmlPath)) {
   throw new Error(`Production asset check failed: ${htmlPath} does not exist.`)
+}
+
+if (buildHtmlFiles.length !== 1) {
+  throw new Error(`Production asset check failed: expected exactly one build-specific HTML file, found ${buildHtmlFiles.length}.`)
 }
 
 const html = readFileSync(htmlPath, 'utf8')

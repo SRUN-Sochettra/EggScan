@@ -1,5 +1,15 @@
 import { AppError } from '../../errors'
 
+function isModelUnavailableResponse(payload: unknown): boolean {
+  if (!payload || typeof payload !== 'object') return false
+  const error = (payload as { error?: unknown }).error
+  if (!error || typeof error !== 'object') return false
+  const errorRecord = error as { status?: unknown; code?: unknown; message?: unknown }
+  const code = String(errorRecord.status ?? errorRecord.code ?? '').toLowerCase()
+  const message = String(errorRecord.message ?? '').toLowerCase()
+  return code.includes('not_found') || code.includes('model_not_found') || (message.includes('model') && (message.includes('not found') || message.includes('not available') || message.includes('unavailable')))
+}
+
 export interface GeminiOptions {
   apiKey: string
   model: string
@@ -71,6 +81,15 @@ export async function requestGemini({
 
     if (!response.ok) {
       const status = response.status
+      let errorPayload: unknown
+      try {
+        errorPayload = await response.json()
+      } catch {
+        errorPayload = undefined
+      }
+      if ((status === 400 || status === 404) && isModelUnavailableResponse(errorPayload)) {
+        throw new AppError(502, 'AI_MODEL_UNAVAILABLE', 'Gemini model is unavailable.')
+      }
       if (status === 429) {
         throw new AppError(
           429,

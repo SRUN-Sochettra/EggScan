@@ -4,7 +4,7 @@
 interface __BaseEnv_Env {
 	DB: D1Database;
 	AI: Ai;
-	GROQ_MODEL: "llama-3.1-8b-instant";
+	GROQ_MODEL: "openai/gpt-oss-120b";
 	GEMINI_MODEL: "gemini-2.5-flash";
 	CEREBRAS_MODEL: "llama3.1-8b";
 	NVIDIA_MODEL: "meta/llama-3.1-8b-instruct";

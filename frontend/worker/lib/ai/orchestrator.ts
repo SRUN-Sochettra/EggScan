@@ -17,7 +17,7 @@ const MAX_OUTPUT_TOKENS = 1_200
 const OVERALL_DEADLINE_MS = 50_000
 const MIN_PROVIDER_TIME_MS = 4_000
 
-const DEFAULT_GROQ_MODEL = 'llama-3.1-8b-instant'
+const DEFAULT_GROQ_MODEL = 'openai/gpt-oss-120b'
 const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash'
 const DEFAULT_CEREBRAS_MODEL = 'llama3.1-8b'
 const DEFAULT_NVIDIA_MODEL = 'meta/llama-3.1-8b-instruct'
@@ -48,6 +48,7 @@ export function getFailureCategory(error: unknown): string {
     if (error.code === 'UPSTREAM_UNAVAILABLE') return 'NETWORK_ERROR'
     if (error.code === 'AI_AUTH_ERROR') return 'AUTH_ERROR'
     if (error.code === 'AI_CONFIG_ERROR') return 'CONFIG_ERROR'
+    if (error.code === 'AI_MODEL_UNAVAILABLE') return 'MODEL_UNAVAILABLE'
     if (error.code === 'AI_REQUEST_ERROR') return 'BAD_REQUEST'
     if (error.code === 'INVALID_AI_RESPONSE') return 'VALIDATION_FAILED'
     if (error.status >= 500) return 'SERVER_ERROR'
@@ -60,6 +61,7 @@ export function getFailureCategory(error: unknown): string {
 
 export function isRetryableProviderError(error: unknown): boolean {
   if (error instanceof AppError) {
+    if (error.code === 'AI_MODEL_UNAVAILABLE') return true
     if (
       error.code === 'AI_AUTH_ERROR' ||
       error.code === 'AI_CONFIG_ERROR' ||
@@ -341,10 +343,7 @@ export async function groqJson<T>(
     failureCategory: getFailureCategory(lastError),
   })
 
-  if (lastError instanceof AppError) {
-    throw lastError
-  }
-  throw new AppError(502, 'INVALID_AI_RESPONSE', 'Repository analysis is temporarily unavailable. Please try again.')
+  throw new AppError(503, 'AI_PROVIDER_UNAVAILABLE', 'The AI analysis service is temporarily unavailable. Please try again shortly.')
 }
 
 export const aiJson = groqJson

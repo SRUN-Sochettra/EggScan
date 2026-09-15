@@ -1,5 +1,18 @@
 import { AppError } from '../../errors'
 
+function isModelUnavailableResponse(payload: unknown): boolean {
+  if (!payload || typeof payload !== 'object') return false
+  const error = (payload as { error?: unknown }).error
+  if (!error || typeof error !== 'object') return false
+  const code = String((error as { code?: unknown }).code ?? '').toLowerCase()
+  const message = String((error as { message?: unknown }).message ?? '').toLowerCase()
+  return (
+    code === 'model_not_found' ||
+    code === 'model_unavailable' ||
+    (message.includes('model') && (message.includes('does not exist') || message.includes('not found') || message.includes('unavailable') || message.includes('not available')))
+  )
+}
+
 export interface OpenAiCompatibleOptions {
   providerName: string
   endpoint: string
@@ -51,6 +64,17 @@ export async function requestOpenAiCompatible({
 
     if (!response.ok) {
       const status = response.status
+      let errorPayload: unknown
+      try {
+        const responseWithClone = response as Response & { clone?: () => Response }
+        const errorResponse = typeof responseWithClone.clone === 'function' ? responseWithClone.clone() : response
+        errorPayload = typeof errorResponse.json === 'function' ? await errorResponse.json() : undefined
+      } catch {
+        errorPayload = undefined
+      }
+      if ((status === 400 || status === 404) && isModelUnavailableResponse(errorPayload)) {
+        throw new AppError(502, 'AI_MODEL_UNAVAILABLE', `${providerName} model is unavailable.`)
+      }
       if (status === 429) {
         throw new AppError(
           429,

@@ -25,7 +25,7 @@ describe('Worker API Endpoints with AI Fallback', () => {
       AI: fakeAi as unknown as Ai,
       GITHUB_TOKEN: 'ghp_test_token',
       GROQ_API_KEY: 'gsk_test_key',
-      GROQ_MODEL: 'llama-3.1-8b-instant',
+      GROQ_MODEL: 'openai/gpt-oss-120b',
       GEMINI_API_KEY: 'test-gemini-key',
       GEMINI_MODEL: 'gemini-2.5-flash',
       WORKERS_AI_MODEL: '@cf/meta/llama-3.1-8b-instruct-fp8',
@@ -42,6 +42,19 @@ describe('Worker API Endpoints with AI Fallback', () => {
     expect(res.status).toBe(200)
     const json = await res.json()
     expect(json).toEqual({ status: 'ok', service: 'eggscan-worker' })
+  })
+
+  it('GitHub profile 404 returns username-specific error code', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      if (String(url).includes('api.github.com/users/missing-user')) return { ok: false, status: 404 } as Response
+      return { ok: false, status: 404 } as Response
+    })
+
+    const res = await app.request('/api/scan/missing-user', {}, fakeEnv)
+    expect(res.status).toBe(404)
+    await expect(res.json()).resolves.toEqual({
+      error: { code: 'GITHUB_USER_NOT_FOUND', message: 'GitHub user was not found.' },
+    })
   })
 
   it('transparently falls back to Gemini when Groq is rate-limited on shame/commits endpoint', async () => {
@@ -150,12 +163,12 @@ describe('Worker API Endpoints with AI Fallback', () => {
     })
 
     const res = await app.request('/api/shame/commits/octocat', {}, fakeEnv)
-    expect(res.status).toBe(502)
+    expect(res.status).toBe(503)
     const json = await res.json()
     expect(json).toEqual({
       error: {
-        code: 'INVALID_AI_RESPONSE',
-        message: 'Repository analysis is temporarily unavailable. Please try again.',
+        code: 'AI_PROVIDER_UNAVAILABLE',
+        message: 'The AI analysis service is temporarily unavailable. Please try again shortly.',
       },
     })
   })

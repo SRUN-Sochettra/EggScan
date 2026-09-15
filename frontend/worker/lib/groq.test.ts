@@ -21,7 +21,7 @@ describe('Multi-Provider AI Fallback Pipeline', () => {
     }
     fakeEnv = {
       GROQ_API_KEY: 'test-groq-key',
-      GROQ_MODEL: 'llama-3.1-8b-instant',
+      GROQ_MODEL: 'openai/gpt-oss-120b',
       GEMINI_API_KEY: 'test-gemini-key',
       GEMINI_MODEL: 'gemini-2.5-flash',
       CEREBRAS_API_KEY: 'test-cerebras-key',
@@ -38,6 +38,60 @@ describe('Multi-Provider AI Fallback Pipeline', () => {
   afterEach(() => {
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
+  })
+
+  it('passes the configured Groq model to the request', async () => {
+    vi.mocked(fetch).mockImplementation(async (url, init) => {
+      if (String(url).includes('api.groq.com')) {
+        const body = JSON.parse(String(init?.body))
+        expect(body.model).toBe('openai/gpt-oss-120b')
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ choices: [{ message: { content: JSON.stringify({ answer: 'configured-model' }) } }] }),
+        } as unknown as Response
+      }
+      return { ok: false, status: 404 } as Response
+    })
+
+    await expect(groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)).resolves.toEqual({ answer: 'configured-model' })
+  })
+
+  it('Groq model-not-found 404 is retryable and falls back to Gemini', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => {
+      if (String(url).includes('api.groq.com')) {
+        return {
+          ok: false,
+          status: 404,
+          json: async () => ({ error: { code: 'model_not_found', message: 'model does not exist' } }),
+        } as unknown as Response
+      }
+      if (String(url).includes('generativelanguage.googleapis.com')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify({ answer: 'gemini-after-model-failure' }) }] } }] }),
+        } as unknown as Response
+      }
+      return { ok: false, status: 404 } as Response
+    })
+
+    await expect(groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)).resolves.toEqual({ answer: 'gemini-after-model-failure' })
+    expect(fetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('malformed provider 400 remains non-retryable', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => String(url).includes('api.groq.com') ? { ok: false, status: 400, json: async () => ({ error: { code: 'invalid_request_error', message: 'bad request' } }) } as unknown as Response : { ok: false, status: 404 } as Response)
+
+    await expect(groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)).rejects.toMatchObject({ code: 'AI_REQUEST_ERROR' })
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('authentication failure remains non-retryable', async () => {
+    vi.mocked(fetch).mockImplementation(async (url) => String(url).includes('api.groq.com') ? { ok: false, status: 401 } as Response : { ok: false, status: 404 } as Response)
+
+    await expect(groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)).rejects.toMatchObject({ code: 'AI_AUTH_ERROR' })
+    expect(fetch).toHaveBeenCalledTimes(1)
   })
 
   it('1. Groq success calls no fallback (Groq: 1, others: 0)', async () => {
@@ -331,9 +385,9 @@ describe('Multi-Provider AI Fallback Pipeline', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(AppError)
       const appError = error as AppError
-      expect(appError.status).toBe(502)
-      expect(appError.code).toBe('INVALID_AI_RESPONSE')
-      expect(appError.message).toBe('Repository analysis is temporarily unavailable. Please try again.')
+      expect(appError.status).toBe(503)
+      expect(appError.code).toBe('AI_PROVIDER_UNAVAILABLE')
+      expect(appError.message).toBe('The AI analysis service is temporarily unavailable. Please try again shortly.')
     }
 
     expect(fetch).toHaveBeenCalledTimes(5) // 1 Groq + 1 Gemini + 1 Cerebras + 1 Nvidia + 1 OpenRouter

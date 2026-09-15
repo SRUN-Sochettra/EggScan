@@ -47,13 +47,28 @@ describe('eggscan API', () => {
       expect(global.fetch).toHaveBeenCalledWith(`${BASE}/api/scan/test%20user?mode=my%20mode%3F`);
     });
 
-    it('throws error with message from api when response is not ok', async () => {
+    it('preserves the GitHub user-not-found error code', async () => {
       global.fetch.mockResolvedValue({
         ok: false,
-        json: async () => ({ error: 'User not found' }),
+        json: async () => ({ error: { code: 'GITHUB_USER_NOT_FOUND', message: 'GitHub user was not found.' } }),
       });
 
-      await expect(scanGithub('testuser')).rejects.toThrow('User not found');
+      await expect(scanGithub('testuser')).rejects.toMatchObject({
+        code: 'GITHUB_USER_NOT_FOUND',
+        message: 'GitHub user was not found.',
+      });
+    });
+
+    it('preserves AI provider errors without username-specific guidance', async () => {
+      global.fetch.mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: { code: 'AI_PROVIDER_UNAVAILABLE', message: 'The AI analysis service is temporarily unavailable. Please try again shortly.' } }),
+      });
+
+      await expect(scanGithub('testuser')).rejects.toMatchObject({
+        code: 'AI_PROVIDER_UNAVAILABLE',
+        message: 'The AI analysis service is temporarily unavailable. Please try again shortly.',
+      });
     });
 
     it('throws default error when response is not ok and json is invalid', async () => {

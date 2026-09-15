@@ -28,8 +28,16 @@ function headers(env: Env) {
 }
 
 export async function scanGitHub(env: Env, username: string) {
-  const [profile, repos, stats] = await Promise.all([
-    fetchJson<GitHubProfile>(`${API}/users/${encodeURIComponent(username)}`, { headers: headers(env) }),
+  let profile: GitHubProfile
+  try {
+    profile = await fetchJson<GitHubProfile>(`${API}/users/${encodeURIComponent(username)}`, { headers: headers(env) })
+  } catch (error) {
+    if (error instanceof AppError && error.status === 404) {
+      throw new AppError(404, 'GITHUB_USER_NOT_FOUND', 'GitHub user was not found.')
+    }
+    throw error
+  }
+  const [repos, stats] = await Promise.all([
     fetchJson<GitHubRepo[]>(`${API}/users/${encodeURIComponent(username)}/repos?per_page=100&sort=updated`, { headers: headers(env) }),
     fetchStats(env, username),
   ])

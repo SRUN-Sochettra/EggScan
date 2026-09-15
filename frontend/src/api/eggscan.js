@@ -2,7 +2,11 @@ const BASE = ''
 
 async function handleResponse(res, fallback) {
   const body = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(body?.error?.message || body?.error || fallback)
+  if (!res.ok) {
+    const error = new Error(body?.error?.message || body?.error || fallback)
+    error.code = body?.error?.code
+    throw error
+  }
   return body
 }
 

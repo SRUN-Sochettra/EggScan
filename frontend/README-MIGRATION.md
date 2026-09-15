@@ -39,7 +39,7 @@ npx wrangler secret put OPENROUTER_API_KEY
 ```
 
 Configure AI Providers and Fallback Chain:
-1. **Groq** (Primary, `GROQ_MODEL`: `llama-3.1-8b-instant`, configured via `GROQ_API_KEY`)
+1. **Groq** (Primary, `GROQ_MODEL`: `openai/gpt-oss-120b`, configured via `GROQ_API_KEY`)
 2. **Google Gemini** (`GEMINI_MODEL`: `gemini-2.5-flash`, configured via `GEMINI_API_KEY`)
 3. **Cerebras** (`CEREBRAS_MODEL`: `llama3.1-8b`, configured via `CEREBRAS_API_KEY`)
 4. **NVIDIA NIM** (`NVIDIA_MODEL`: `meta/llama-3.1-8b-instruct`, configured via `NVIDIA_API_KEY`)

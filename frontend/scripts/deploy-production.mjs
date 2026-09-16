@@ -44,11 +44,11 @@ if (!builtMarker) throw new Error('Canonical deploy failed: built HTML has no eg
 if (!modulePath?.startsWith('/assets/') || !modulePath.endsWith('.js')) throw new Error('Canonical deploy failed: built HTML has no compiled /assets/*.js module.')
 if (builtHtml.includes('/src/main.jsx') || /(?:src|href)=["'][^"']+\.jsx(?:["']|\?)/i.test(builtHtml)) throw new Error('Canonical deploy failed: source JSX reference remains in built HTML.')
 
-const dryRunOutput = captureNpm(['exec', '--', 'wrangler', 'deploy', '--config', configPath, '--dry-run', '--outdir', 'dist/deploy-dry-run'])
+const dryRunOutput = captureNpm(['exec', '--', 'wrangler', 'deploy', '--config', generatedConfigPath, '--dry-run', '--outdir', 'dist/deploy-dry-run'])
 if (!/Read \d+ files from the assets directory .*dist[\\/]client/i.test(dryRunOutput)) {
   throw new Error(`Canonical deploy failed: Wrangler dry run did not resolve dist/client. Output:\n${dryRunOutput}`)
 }
-runNpm(['exec', '--', 'wrangler', 'deploy', '--config', configPath])
+runNpm(['exec', '--', 'wrangler', 'deploy', '--config', generatedConfigPath])
 
 const deadline = Date.now() + 120_000
 let lastMismatch = ''

@@ -40,6 +40,41 @@ describe('Multi-Provider AI Fallback Pipeline', () => {
     vi.unstubAllGlobals()
   })
 
+  it('passes the runtime Groq binding to the configured provider', async () => {
+    vi.mocked(fetch).mockImplementation(async (url, init) => {
+      if (!String(url).includes('api.groq.com')) return { ok: false, status: 404 } as Response
+      expect(init?.headers).toMatchObject({ Authorization: 'Bearer test-groq-key' })
+      const body = JSON.parse(String(init?.body))
+      expect(body.model).toBe('openai/gpt-oss-120b')
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ choices: [{ message: { content: JSON.stringify({ answer: 'runtime-binding-reached-groq' }) } }] }),
+      } as unknown as Response
+    })
+
+    await expect(groqJson(fakeEnv, 'System prompt', { some: 'evidence' }, TestSchema)).resolves.toEqual({ answer: 'runtime-binding-reached-groq' })
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns configuration error only when no AI provider is configured', async () => {
+    const envWithoutAi: Env = {
+      ...fakeEnv,
+      GROQ_API_KEY: '',
+      GEMINI_API_KEY: undefined,
+      CEREBRAS_API_KEY: undefined,
+      NVIDIA_API_KEY: undefined,
+      OPENROUTER_API_KEY: undefined,
+      AI: undefined,
+    }
+
+    await expect(groqJson(envWithoutAi, 'System prompt', { some: 'evidence' }, TestSchema)).rejects.toMatchObject({
+      code: 'AI_CONFIG_ERROR',
+      message: 'groq API key is not configured.',
+    })
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
   it('passes the configured Groq model to the request', async () => {
     vi.mocked(fetch).mockImplementation(async (url, init) => {
       if (String(url).includes('api.groq.com')) {
